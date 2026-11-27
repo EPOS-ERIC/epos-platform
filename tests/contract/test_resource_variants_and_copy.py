@@ -235,7 +235,7 @@ class ResourceVariantsAndCopyContractTest(unittest.TestCase):
                     method="POST",
                     body_content_type="text/plain",
                     body_template="{{.payload}}",
-                    body_parameters=[child("payload")],
+                    body_parameters=[child("payload", default="default")],
                     keywords=["service"],
                 )
             ],

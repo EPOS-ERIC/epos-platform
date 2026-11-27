@@ -539,6 +539,16 @@ func (UnimplementedHandler) ListGroups(ctx context.Context) (r []Group, _ error)
 	return r, ht.ErrNotImplemented
 }
 
+// ListMonitoringDistributions implements listMonitoringDistributions operation.
+//
+// Requires global.monitoring.read. Returns default provider requests without executing them.
+// Distributions that cannot be prepared are omitted.
+//
+// GET /monitoring/distributions
+func (UnimplementedHandler) ListMonitoringDistributions(ctx context.Context) (r []MonitoringConcept, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // ListNotificationTopics implements listNotificationTopics operation.
 //
 // Returns notification topics available for subscription. Direct notification routes are internal and

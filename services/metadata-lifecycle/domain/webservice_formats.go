@@ -99,9 +99,6 @@ func validateParameterRole(serviceType WebServiceType, parameter ParameterInput,
 		if schema.MultipleValues {
 			return apperror.Field(target+".multiple_values", "DYNAMIC coordinate parameters must have a single value.", nil)
 		}
-		if len(schema.Default) != 0 {
-			return apperror.Field(target+".default", "DYNAMIC coordinate parameters must not have a default.", nil)
-		}
 		if len(schema.Enum) != 0 {
 			return apperror.Field(target+".enum", "DYNAMIC coordinate parameters must not define an enum.", nil)
 		}

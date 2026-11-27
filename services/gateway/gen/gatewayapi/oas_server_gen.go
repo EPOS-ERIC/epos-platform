@@ -372,6 +372,13 @@ type Handler interface {
 	//
 	// GET /groups
 	ListGroups(ctx context.Context) ([]Group, error)
+	// ListMonitoringDistributions implements listMonitoringDistributions operation.
+	//
+	// Requires global.monitoring.read. Returns default provider requests without executing them.
+	// Distributions that cannot be prepared are omitted.
+	//
+	// GET /monitoring/distributions
+	ListMonitoringDistributions(ctx context.Context) ([]MonitoringConcept, error)
 	// ListNotificationTopics implements listNotificationTopics operation.
 	//
 	// Returns notification topics available for subscription. Direct notification routes are internal and

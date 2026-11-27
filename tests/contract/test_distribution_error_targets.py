@@ -23,6 +23,9 @@ class DistributionErrorTargetsContractTest(DistributionContractTestCase):
         group_id = create_group(self.gateway, f"error-target-{uuid4().hex}")
         cases = (
             (parameter(pattern="["), "parameters[0].pattern"),
+            (parameter("X-Example", location="HEADER", default="bad\nvalue"), "parameters[0].default"),
+            (parameter("X-Example", location="HEADER", multiple_values=True,
+                       default=["valid", "bad\rvalue"]), "parameters[0].default"),
             (parameter("filter", "TEMPLATE", template="{{", parameters=[]), "parameters[0].template"),
             (parameter("filter", "TEMPLATE", template="{{.value}}", parameters=[
                 child("bad-name"),
@@ -93,6 +96,53 @@ class DistributionErrorTargetsContractTest(DistributionContractTestCase):
             "metadata.distributions[0].web_service.get_map_parameters[0].parameters[0].default",
         )
 
+    def test_http_required_default_targets(self) -> None:
+        """Regression: reject HTTP metadata that leaves required inputs without defaults."""
+        group_id = create_group(self.gateway, f"error-target-{uuid4().hex}")
+        cases = (
+            (web_distribution([parameter(required=True)]), "parameters[0].default"),
+            (web_distribution([parameter(
+                "filter", "TEMPLATE", template="{{.value}}", parameters=[child(required=True)],
+            )]), "parameters[0].parameters[0].default"),
+            (web_distribution(
+                method="POST", body_content_type="text/plain", body_template="{{.value}}",
+                body_parameters=[child(required=True)],
+            ), "body_parameters[0].default"),
+        )
+        for distribution, suffix in cases:
+            with self.subTest(target=suffix):
+                self.assert_target(
+                    self.create_response(group_id, distribution),
+                    f"metadata.distributions[0].web_service.{suffix}",
+                )
+
+    def test_required_template_default_rendering(self) -> None:
+        """Regression: saving required templates that fail with defaults must identify the template and reason."""
+        group_id = create_group(self.gateway, f"error-target-{uuid4().hex}")
+        cases = (
+            (web_distribution([parameter(
+                "filter", "TEMPLATE", required=True, template="{{.value}}", parameters=[child()],
+            )]), "parameters[0].template", 'map has no entry for key "value"'),
+            (web_distribution(
+                method="POST", body_content_type="text/plain", body_template="{{eq .value 1}}",
+                body_parameters=[child(default="sensitive-default-canary")],
+            ), "body_template", "incompatible types for comparison"),
+            (web_distribution(
+                method="POST", body_content_type="text/plain", body_template="{{eq .value 1}}",
+                body_required=False, body_parameters=[child(default="sensitive-default-canary")],
+            ), "body_template", "incompatible types for comparison"),
+            (web_distribution([parameter(
+                "X-Example", "TEMPLATE", required=True, location="HEADER",
+                template="{{.value}}", parameters=[child(default="sensitive-default-canary\nvalue")],
+            )]), "parameters[0].template", "invalid HTTP header value"),
+        )
+        for distribution, target, detail in cases:
+            with self.subTest(target=target, detail=detail):
+                response = self.create_response(group_id, distribution)
+                problem = assert_problem(self, response, 400, "validation_failed")
+                self.assertEqual(problem.get("target"), f"metadata.distributions[0].web_service.{target}")
+                self.assertIn(detail, problem["detail"])
+
     def test_access_template_targets_parameters(self) -> None:
         """Regression: query and body template errors must not invent nested access-request fields."""
         distributions = [
@@ -140,8 +190,8 @@ class DistributionErrorTargetsContractTest(DistributionContractTestCase):
     def test_dynamic_coordinate_targets(self) -> None:
         """Regression: synthetic coordinate parameters must not leak into access-request targets."""
         distribution = web_distribution([
-            parameter("lon", "FLOAT", role="LONGITUDE", required=True, minimum=-180, maximum=180),
-            parameter("lat", "FLOAT", position=1, role="LATITUDE", required=True, minimum=-90, maximum=90),
+            parameter("lon", "FLOAT", role="LONGITUDE", required=True, default=0.0, minimum=-180, maximum=180),
+            parameter("lat", "FLOAT", position=1, role="LATITUDE", required=True, default=0.0, minimum=-90, maximum=90),
         ], type="DYNAMIC")
         detail = self.create_draft([distribution])
         saved = detail["metadata"]["distributions"][0]

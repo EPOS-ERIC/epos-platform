@@ -8,7 +8,7 @@ from test_wfs import wfs_distribution
 
 
 def coordinate(name: str, role: str, **fields: Any) -> dict[str, Any]:
-    return parameter(name, "FLOAT", role=role, required=True, **fields)
+    return parameter(name, "FLOAT", role=role, required=True, **{"default": 0.0, **fields})
 
 
 def dynamic_distribution(parameters: list[dict[str, Any]], **configuration: Any) -> dict[str, Any]:
@@ -40,7 +40,7 @@ class DynamicWebServiceContractTest(DistributionContractTestCase):
             ("integer", dynamic_distribution([parameter("lon", "INTEGER", role="LONGITUDE", required=True), lat])),
             ("optional", dynamic_distribution([parameter("lon", "FLOAT", role="LONGITUDE"), lat])),
             ("read only", dynamic_distribution([coordinate("lon", "LONGITUDE", read_only=True), lat])),
-            ("default", dynamic_distribution([coordinate("lon", "LONGITUDE", default=1.0), lat])),
+            ("missing default", dynamic_distribution([coordinate("lon", "LONGITUDE", default=None), lat])),
             ("enum", dynamic_distribution([coordinate("lon", "LONGITUDE", enum=[{"value": 1.0}]), lat])),
             ("multiple", dynamic_distribution([coordinate("lon", "LONGITUDE", multiple_values=True,
                                                            enum=[{"value": 1.0}]), lat])),
@@ -118,8 +118,8 @@ class DynamicWebServiceContractTest(DistributionContractTestCase):
         """Regression: both clone flows preserve template-child roles."""
         source = dynamic_distribution([
             parameter("point", "TEMPLATE", template="{{.lon}},{{.lat}}", parameters=[
-                child("lon", "FLOAT", required=True, role="LONGITUDE"),
-                child("lat", "FLOAT", position=1, required=True, role="LATITUDE"),
+                child("lon", "FLOAT", required=True, role="LONGITUDE", default=0.0),
+                child("lat", "FLOAT", position=1, required=True, role="LATITUDE", default=0.0),
             ]),
         ])
         detail = self.create_draft([source])
@@ -160,8 +160,8 @@ class DynamicWebServiceContractTest(DistributionContractTestCase):
         ], template_url="https://provider.invalid/{lon}")
         template = dynamic_distribution([
             parameter("point", "TEMPLATE", template="{{.lon}},{{.lat}}", parameters=[
-                child("lon", "FLOAT", required=True, role="LONGITUDE"),
-                child("lat", "FLOAT", required=True, role="LATITUDE"),
+                child("lon", "FLOAT", required=True, role="LONGITUDE", default=0.0),
+                child("lat", "FLOAT", required=True, role="LATITUDE", default=0.0),
                 child("extra"),
             ]),
         ])
@@ -169,8 +169,8 @@ class DynamicWebServiceContractTest(DistributionContractTestCase):
         body_service = dynamic_distribution([], method="POST", body_content_type="text/plain",
                                             body_required=False, body_template="{{.lon}},{{.lat}},{{.extra}}",
                                             body_parameters=[
-                                                child("lon", "FLOAT", required=True, role="LONGITUDE"),
-                                                child("lat", "FLOAT", required=True, role="LATITUDE"),
+                                                child("lon", "FLOAT", required=True, role="LONGITUDE", default=0.0),
+                                                child("lat", "FLOAT", required=True, role="LATITUDE", default=0.0),
                                                 child("extra"),
                                             ])
         body_service["title"] = "body"

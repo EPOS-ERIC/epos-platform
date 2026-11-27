@@ -1944,6 +1944,402 @@ func (x *PrepareDistributionAccessResponse) GetBody() []byte {
 	return nil
 }
 
+type ListMonitoringDistributionsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListMonitoringDistributionsRequest) Reset() {
+	*x = ListMonitoringDistributionsRequest{}
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListMonitoringDistributionsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListMonitoringDistributionsRequest) ProtoMessage() {}
+
+func (x *ListMonitoringDistributionsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListMonitoringDistributionsRequest.ProtoReflect.Descriptor instead.
+func (*ListMonitoringDistributionsRequest) Descriptor() ([]byte, []int) {
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{21}
+}
+
+type MonitoringContactPoint struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Email         string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MonitoringContactPoint) Reset() {
+	*x = MonitoringContactPoint{}
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MonitoringContactPoint) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MonitoringContactPoint) ProtoMessage() {}
+
+func (x *MonitoringContactPoint) ProtoReflect() protoreflect.Message {
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MonitoringContactPoint.ProtoReflect.Descriptor instead.
+func (*MonitoringContactPoint) Descriptor() ([]byte, []int) {
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *MonitoringContactPoint) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *MonitoringContactPoint) GetEmail() string {
+	if x != nil {
+		return x.Email
+	}
+	return ""
+}
+
+type MonitoringRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Method        string                 `protobuf:"bytes,1,opt,name=method,proto3" json:"method,omitempty"`
+	Url           string                 `protobuf:"bytes,2,opt,name=url,proto3" json:"url,omitempty"`
+	Headers       map[string]string      `protobuf:"bytes,3,rep,name=headers,proto3" json:"headers,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Body          []byte                 `protobuf:"bytes,4,opt,name=body,proto3,oneof" json:"body,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MonitoringRequest) Reset() {
+	*x = MonitoringRequest{}
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MonitoringRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MonitoringRequest) ProtoMessage() {}
+
+func (x *MonitoringRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MonitoringRequest.ProtoReflect.Descriptor instead.
+func (*MonitoringRequest) Descriptor() ([]byte, []int) {
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *MonitoringRequest) GetMethod() string {
+	if x != nil {
+		return x.Method
+	}
+	return ""
+}
+
+func (x *MonitoringRequest) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+func (x *MonitoringRequest) GetHeaders() map[string]string {
+	if x != nil {
+		return x.Headers
+	}
+	return nil
+}
+
+func (x *MonitoringRequest) GetBody() []byte {
+	if x != nil {
+		return x.Body
+	}
+	return nil
+}
+
+type MonitoringDistribution struct {
+	state         protoimpl.MessageState    `protogen:"open.v1"`
+	VersionId     string                    `protobuf:"bytes,1,opt,name=version_id,json=versionId,proto3" json:"version_id,omitempty"`
+	ResourceId    string                    `protobuf:"bytes,2,opt,name=resource_id,json=resourceId,proto3" json:"resource_id,omitempty"`
+	Name          string                    `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	Request       *MonitoringRequest        `protobuf:"bytes,4,opt,name=request,proto3" json:"request,omitempty"`
+	ContactPoints []*MonitoringContactPoint `protobuf:"bytes,5,rep,name=contact_points,json=contactPoints,proto3" json:"contact_points,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MonitoringDistribution) Reset() {
+	*x = MonitoringDistribution{}
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MonitoringDistribution) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MonitoringDistribution) ProtoMessage() {}
+
+func (x *MonitoringDistribution) ProtoReflect() protoreflect.Message {
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MonitoringDistribution.ProtoReflect.Descriptor instead.
+func (*MonitoringDistribution) Descriptor() ([]byte, []int) {
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *MonitoringDistribution) GetVersionId() string {
+	if x != nil {
+		return x.VersionId
+	}
+	return ""
+}
+
+func (x *MonitoringDistribution) GetResourceId() string {
+	if x != nil {
+		return x.ResourceId
+	}
+	return ""
+}
+
+func (x *MonitoringDistribution) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *MonitoringDistribution) GetRequest() *MonitoringRequest {
+	if x != nil {
+		return x.Request
+	}
+	return nil
+}
+
+func (x *MonitoringDistribution) GetContactPoints() []*MonitoringContactPoint {
+	if x != nil {
+		return x.ContactPoints
+	}
+	return nil
+}
+
+type MonitoringGroup struct {
+	state         protoimpl.MessageState    `protogen:"open.v1"`
+	Id            string                    `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name          string                    `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Distributions []*MonitoringDistribution `protobuf:"bytes,3,rep,name=distributions,proto3" json:"distributions,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MonitoringGroup) Reset() {
+	*x = MonitoringGroup{}
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MonitoringGroup) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MonitoringGroup) ProtoMessage() {}
+
+func (x *MonitoringGroup) ProtoReflect() protoreflect.Message {
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MonitoringGroup.ProtoReflect.Descriptor instead.
+func (*MonitoringGroup) Descriptor() ([]byte, []int) {
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *MonitoringGroup) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *MonitoringGroup) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *MonitoringGroup) GetDistributions() []*MonitoringDistribution {
+	if x != nil {
+		return x.Distributions
+	}
+	return nil
+}
+
+type MonitoringConcept struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ConceptId     string                 `protobuf:"bytes,1,opt,name=concept_id,json=conceptId,proto3" json:"concept_id,omitempty"`
+	Concept       string                 `protobuf:"bytes,2,opt,name=concept,proto3" json:"concept,omitempty"`
+	Groups        []*MonitoringGroup     `protobuf:"bytes,3,rep,name=groups,proto3" json:"groups,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MonitoringConcept) Reset() {
+	*x = MonitoringConcept{}
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MonitoringConcept) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MonitoringConcept) ProtoMessage() {}
+
+func (x *MonitoringConcept) ProtoReflect() protoreflect.Message {
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MonitoringConcept.ProtoReflect.Descriptor instead.
+func (*MonitoringConcept) Descriptor() ([]byte, []int) {
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *MonitoringConcept) GetConceptId() string {
+	if x != nil {
+		return x.ConceptId
+	}
+	return ""
+}
+
+func (x *MonitoringConcept) GetConcept() string {
+	if x != nil {
+		return x.Concept
+	}
+	return ""
+}
+
+func (x *MonitoringConcept) GetGroups() []*MonitoringGroup {
+	if x != nil {
+		return x.Groups
+	}
+	return nil
+}
+
+type ListMonitoringDistributionsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Concepts      []*MonitoringConcept   `protobuf:"bytes,1,rep,name=concepts,proto3" json:"concepts,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListMonitoringDistributionsResponse) Reset() {
+	*x = ListMonitoringDistributionsResponse{}
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListMonitoringDistributionsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListMonitoringDistributionsResponse) ProtoMessage() {}
+
+func (x *ListMonitoringDistributionsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListMonitoringDistributionsResponse.ProtoReflect.Descriptor instead.
+func (*ListMonitoringDistributionsResponse) Descriptor() ([]byte, []int) {
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *ListMonitoringDistributionsResponse) GetConcepts() []*MonitoringConcept {
+	if x != nil {
+		return x.Concepts
+	}
+	return nil
+}
+
 type ListResourceVersionsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ResourceType  ResourceType           `protobuf:"varint,1,opt,name=resource_type,json=resourceType,proto3,enum=metadata_lifecycle.v1.ResourceType" json:"resource_type,omitempty"`
@@ -1954,7 +2350,7 @@ type ListResourceVersionsRequest struct {
 
 func (x *ListResourceVersionsRequest) Reset() {
 	*x = ListResourceVersionsRequest{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[21]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1966,7 +2362,7 @@ func (x *ListResourceVersionsRequest) String() string {
 func (*ListResourceVersionsRequest) ProtoMessage() {}
 
 func (x *ListResourceVersionsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[21]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1979,7 +2375,7 @@ func (x *ListResourceVersionsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListResourceVersionsRequest.ProtoReflect.Descriptor instead.
 func (*ListResourceVersionsRequest) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{21}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *ListResourceVersionsRequest) GetResourceType() ResourceType {
@@ -2022,7 +2418,7 @@ type ResourceVersionSummary struct {
 
 func (x *ResourceVersionSummary) Reset() {
 	*x = ResourceVersionSummary{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[22]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2034,7 +2430,7 @@ func (x *ResourceVersionSummary) String() string {
 func (*ResourceVersionSummary) ProtoMessage() {}
 
 func (x *ResourceVersionSummary) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[22]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2047,7 +2443,7 @@ func (x *ResourceVersionSummary) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResourceVersionSummary.ProtoReflect.Descriptor instead.
 func (*ResourceVersionSummary) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{22}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *ResourceVersionSummary) GetResourceType() ResourceType {
@@ -2185,7 +2581,7 @@ type ListResourceVersionsResponse struct {
 
 func (x *ListResourceVersionsResponse) Reset() {
 	*x = ListResourceVersionsResponse{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[23]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2197,7 +2593,7 @@ func (x *ListResourceVersionsResponse) String() string {
 func (*ListResourceVersionsResponse) ProtoMessage() {}
 
 func (x *ListResourceVersionsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[23]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2210,7 +2606,7 @@ func (x *ListResourceVersionsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListResourceVersionsResponse.ProtoReflect.Descriptor instead.
 func (*ListResourceVersionsResponse) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{23}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *ListResourceVersionsResponse) GetVersions() []*ResourceVersionSummary {
@@ -2246,7 +2642,7 @@ type ResourceVersion struct {
 
 func (x *ResourceVersion) Reset() {
 	*x = ResourceVersion{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[24]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2258,7 +2654,7 @@ func (x *ResourceVersion) String() string {
 func (*ResourceVersion) ProtoMessage() {}
 
 func (x *ResourceVersion) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[24]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2271,7 +2667,7 @@ func (x *ResourceVersion) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResourceVersion.ProtoReflect.Descriptor instead.
 func (*ResourceVersion) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{24}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *ResourceVersion) GetResourceId() string {
@@ -2447,7 +2843,7 @@ type DatasetResourceMetadata struct {
 
 func (x *DatasetResourceMetadata) Reset() {
 	*x = DatasetResourceMetadata{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[25]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2459,7 +2855,7 @@ func (x *DatasetResourceMetadata) String() string {
 func (*DatasetResourceMetadata) ProtoMessage() {}
 
 func (x *DatasetResourceMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[25]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2472,7 +2868,7 @@ func (x *DatasetResourceMetadata) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DatasetResourceMetadata.ProtoReflect.Descriptor instead.
 func (*DatasetResourceMetadata) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{25}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *DatasetResourceMetadata) GetTitle() string {
@@ -2678,7 +3074,7 @@ type SoftwareApplicationResourceMetadata struct {
 
 func (x *SoftwareApplicationResourceMetadata) Reset() {
 	*x = SoftwareApplicationResourceMetadata{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[26]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2690,7 +3086,7 @@ func (x *SoftwareApplicationResourceMetadata) String() string {
 func (*SoftwareApplicationResourceMetadata) ProtoMessage() {}
 
 func (x *SoftwareApplicationResourceMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[26]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2703,7 +3099,7 @@ func (x *SoftwareApplicationResourceMetadata) ProtoReflect() protoreflect.Messag
 
 // Deprecated: Use SoftwareApplicationResourceMetadata.ProtoReflect.Descriptor instead.
 func (*SoftwareApplicationResourceMetadata) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{26}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *SoftwareApplicationResourceMetadata) GetName() string {
@@ -2819,7 +3215,7 @@ type SoftwareSourceCodeResourceMetadata struct {
 
 func (x *SoftwareSourceCodeResourceMetadata) Reset() {
 	*x = SoftwareSourceCodeResourceMetadata{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[27]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2831,7 +3227,7 @@ func (x *SoftwareSourceCodeResourceMetadata) String() string {
 func (*SoftwareSourceCodeResourceMetadata) ProtoMessage() {}
 
 func (x *SoftwareSourceCodeResourceMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[27]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2844,7 +3240,7 @@ func (x *SoftwareSourceCodeResourceMetadata) ProtoReflect() protoreflect.Message
 
 // Deprecated: Use SoftwareSourceCodeResourceMetadata.ProtoReflect.Descriptor instead.
 func (*SoftwareSourceCodeResourceMetadata) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{27}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *SoftwareSourceCodeResourceMetadata) GetName() string {
@@ -2957,7 +3353,7 @@ type ResourceRecord struct {
 
 func (x *ResourceRecord) Reset() {
 	*x = ResourceRecord{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[28]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2969,7 +3365,7 @@ func (x *ResourceRecord) String() string {
 func (*ResourceRecord) ProtoMessage() {}
 
 func (x *ResourceRecord) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[28]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2982,7 +3378,7 @@ func (x *ResourceRecord) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResourceRecord.ProtoReflect.Descriptor instead.
 func (*ResourceRecord) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{28}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *ResourceRecord) GetResourceId() string {
@@ -3025,7 +3421,7 @@ type VersionedIdentifier struct {
 
 func (x *VersionedIdentifier) Reset() {
 	*x = VersionedIdentifier{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[29]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3037,7 +3433,7 @@ func (x *VersionedIdentifier) String() string {
 func (*VersionedIdentifier) ProtoMessage() {}
 
 func (x *VersionedIdentifier) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[29]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3050,7 +3446,7 @@ func (x *VersionedIdentifier) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VersionedIdentifier.ProtoReflect.Descriptor instead.
 func (*VersionedIdentifier) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{29}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *VersionedIdentifier) GetId() string {
@@ -3092,7 +3488,7 @@ type VersionedIdentifierInput struct {
 
 func (x *VersionedIdentifierInput) Reset() {
 	*x = VersionedIdentifierInput{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[30]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3104,7 +3500,7 @@ func (x *VersionedIdentifierInput) String() string {
 func (*VersionedIdentifierInput) ProtoMessage() {}
 
 func (x *VersionedIdentifierInput) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[30]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3117,7 +3513,7 @@ func (x *VersionedIdentifierInput) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VersionedIdentifierInput.ProtoReflect.Descriptor instead.
 func (*VersionedIdentifierInput) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{30}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *VersionedIdentifierInput) GetResourceId() string {
@@ -3151,7 +3547,7 @@ type Temporal struct {
 
 func (x *Temporal) Reset() {
 	*x = Temporal{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[31]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3163,7 +3559,7 @@ func (x *Temporal) String() string {
 func (*Temporal) ProtoMessage() {}
 
 func (x *Temporal) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[31]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3176,7 +3572,7 @@ func (x *Temporal) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Temporal.ProtoReflect.Descriptor instead.
 func (*Temporal) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{31}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *Temporal) GetStart() *timestamppb.Timestamp {
@@ -3203,7 +3599,7 @@ type GeologicalTemporalCoverage struct {
 
 func (x *GeologicalTemporalCoverage) Reset() {
 	*x = GeologicalTemporalCoverage{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[32]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3215,7 +3611,7 @@ func (x *GeologicalTemporalCoverage) String() string {
 func (*GeologicalTemporalCoverage) ProtoMessage() {}
 
 func (x *GeologicalTemporalCoverage) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[32]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3228,7 +3624,7 @@ func (x *GeologicalTemporalCoverage) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GeologicalTemporalCoverage.ProtoReflect.Descriptor instead.
 func (*GeologicalTemporalCoverage) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{32}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *GeologicalTemporalCoverage) GetStartMya() float64 {
@@ -3278,7 +3674,7 @@ type DatasetInput struct {
 
 func (x *DatasetInput) Reset() {
 	*x = DatasetInput{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[33]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3290,7 +3686,7 @@ func (x *DatasetInput) String() string {
 func (*DatasetInput) ProtoMessage() {}
 
 func (x *DatasetInput) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[33]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3303,7 +3699,7 @@ func (x *DatasetInput) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DatasetInput.ProtoReflect.Descriptor instead.
 func (*DatasetInput) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{33}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *DatasetInput) GetTitle() string {
@@ -3506,7 +3902,7 @@ type DistributionInput struct {
 
 func (x *DistributionInput) Reset() {
 	*x = DistributionInput{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[34]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[41]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3518,7 +3914,7 @@ func (x *DistributionInput) String() string {
 func (*DistributionInput) ProtoMessage() {}
 
 func (x *DistributionInput) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[34]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[41]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3531,7 +3927,7 @@ func (x *DistributionInput) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DistributionInput.ProtoReflect.Descriptor instead.
 func (*DistributionInput) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{34}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *DistributionInput) GetTitle() string {
@@ -3637,7 +4033,7 @@ type Distribution struct {
 
 func (x *Distribution) Reset() {
 	*x = Distribution{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[35]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[42]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3649,7 +4045,7 @@ func (x *Distribution) String() string {
 func (*Distribution) ProtoMessage() {}
 
 func (x *Distribution) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[35]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[42]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3662,7 +4058,7 @@ func (x *Distribution) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Distribution.ProtoReflect.Descriptor instead.
 func (*Distribution) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{35}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{42}
 }
 
 func (x *Distribution) GetTitle() string {
@@ -3765,7 +4161,7 @@ type NativeFormat struct {
 
 func (x *NativeFormat) Reset() {
 	*x = NativeFormat{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[36]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[43]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3777,7 +4173,7 @@ func (x *NativeFormat) String() string {
 func (*NativeFormat) ProtoMessage() {}
 
 func (x *NativeFormat) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[36]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[43]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3790,7 +4186,7 @@ func (x *NativeFormat) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NativeFormat.ProtoReflect.Descriptor instead.
 func (*NativeFormat) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{36}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{43}
 }
 
 func (x *NativeFormat) GetOutputFormat() string {
@@ -3823,7 +4219,7 @@ type WebServiceInput struct {
 
 func (x *WebServiceInput) Reset() {
 	*x = WebServiceInput{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[37]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[44]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3835,7 +4231,7 @@ func (x *WebServiceInput) String() string {
 func (*WebServiceInput) ProtoMessage() {}
 
 func (x *WebServiceInput) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[37]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[44]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3848,7 +4244,7 @@ func (x *WebServiceInput) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WebServiceInput.ProtoReflect.Descriptor instead.
 func (*WebServiceInput) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{37}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{44}
 }
 
 func (x *WebServiceInput) GetService() isWebServiceInput_Service {
@@ -3951,7 +4347,7 @@ type WebServiceCommonInput struct {
 
 func (x *WebServiceCommonInput) Reset() {
 	*x = WebServiceCommonInput{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[38]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[45]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3963,7 +4359,7 @@ func (x *WebServiceCommonInput) String() string {
 func (*WebServiceCommonInput) ProtoMessage() {}
 
 func (x *WebServiceCommonInput) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[38]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[45]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3976,7 +4372,7 @@ func (x *WebServiceCommonInput) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WebServiceCommonInput.ProtoReflect.Descriptor instead.
 func (*WebServiceCommonInput) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{38}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{45}
 }
 
 func (x *WebServiceCommonInput) GetProviderId() string {
@@ -4037,7 +4433,7 @@ type WebService struct {
 
 func (x *WebService) Reset() {
 	*x = WebService{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[39]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[46]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4049,7 +4445,7 @@ func (x *WebService) String() string {
 func (*WebService) ProtoMessage() {}
 
 func (x *WebService) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[39]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[46]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4062,7 +4458,7 @@ func (x *WebService) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WebService.ProtoReflect.Descriptor instead.
 func (*WebService) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{39}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{46}
 }
 
 func (x *WebService) GetService() isWebService_Service {
@@ -4166,7 +4562,7 @@ type WebServiceCommon struct {
 
 func (x *WebServiceCommon) Reset() {
 	*x = WebServiceCommon{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[40]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[47]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4178,7 +4574,7 @@ func (x *WebServiceCommon) String() string {
 func (*WebServiceCommon) ProtoMessage() {}
 
 func (x *WebServiceCommon) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[40]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[47]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4191,7 +4587,7 @@ func (x *WebServiceCommon) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WebServiceCommon.ProtoReflect.Descriptor instead.
 func (*WebServiceCommon) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{40}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{47}
 }
 
 func (x *WebServiceCommon) GetDocumentationUri() string {
@@ -4255,7 +4651,7 @@ type RequestBodyInput struct {
 
 func (x *RequestBodyInput) Reset() {
 	*x = RequestBodyInput{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[41]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[48]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4267,7 +4663,7 @@ func (x *RequestBodyInput) String() string {
 func (*RequestBodyInput) ProtoMessage() {}
 
 func (x *RequestBodyInput) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[41]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[48]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4280,7 +4676,7 @@ func (x *RequestBodyInput) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RequestBodyInput.ProtoReflect.Descriptor instead.
 func (*RequestBodyInput) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{41}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{48}
 }
 
 func (x *RequestBodyInput) GetRequired() bool {
@@ -4323,7 +4719,7 @@ type RequestBody struct {
 
 func (x *RequestBody) Reset() {
 	*x = RequestBody{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[42]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[49]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4335,7 +4731,7 @@ func (x *RequestBody) String() string {
 func (*RequestBody) ProtoMessage() {}
 
 func (x *RequestBody) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[42]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[49]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4348,7 +4744,7 @@ func (x *RequestBody) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RequestBody.ProtoReflect.Descriptor instead.
 func (*RequestBody) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{42}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{49}
 }
 
 func (x *RequestBody) GetRequired() bool {
@@ -4393,7 +4789,7 @@ type HTTPWebServiceInput struct {
 
 func (x *HTTPWebServiceInput) Reset() {
 	*x = HTTPWebServiceInput{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[43]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[50]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4405,7 +4801,7 @@ func (x *HTTPWebServiceInput) String() string {
 func (*HTTPWebServiceInput) ProtoMessage() {}
 
 func (x *HTTPWebServiceInput) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[43]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[50]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4418,7 +4814,7 @@ func (x *HTTPWebServiceInput) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HTTPWebServiceInput.ProtoReflect.Descriptor instead.
 func (*HTTPWebServiceInput) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{43}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{50}
 }
 
 func (x *HTTPWebServiceInput) GetCommon() *WebServiceCommonInput {
@@ -4477,7 +4873,7 @@ type DynamicWebServiceInput struct {
 
 func (x *DynamicWebServiceInput) Reset() {
 	*x = DynamicWebServiceInput{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[44]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[51]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4489,7 +4885,7 @@ func (x *DynamicWebServiceInput) String() string {
 func (*DynamicWebServiceInput) ProtoMessage() {}
 
 func (x *DynamicWebServiceInput) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[44]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[51]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4502,7 +4898,7 @@ func (x *DynamicWebServiceInput) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DynamicWebServiceInput.ProtoReflect.Descriptor instead.
 func (*DynamicWebServiceInput) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{44}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{51}
 }
 
 func (x *DynamicWebServiceInput) GetCommon() *WebServiceCommonInput {
@@ -4562,7 +4958,7 @@ type HTTPWebService struct {
 
 func (x *HTTPWebService) Reset() {
 	*x = HTTPWebService{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[45]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[52]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4574,7 +4970,7 @@ func (x *HTTPWebService) String() string {
 func (*HTTPWebService) ProtoMessage() {}
 
 func (x *HTTPWebService) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[45]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[52]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4587,7 +4983,7 @@ func (x *HTTPWebService) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HTTPWebService.ProtoReflect.Descriptor instead.
 func (*HTTPWebService) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{45}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{52}
 }
 
 func (x *HTTPWebService) GetCommon() *WebServiceCommon {
@@ -4654,7 +5050,7 @@ type DynamicWebService struct {
 
 func (x *DynamicWebService) Reset() {
 	*x = DynamicWebService{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[46]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[53]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4666,7 +5062,7 @@ func (x *DynamicWebService) String() string {
 func (*DynamicWebService) ProtoMessage() {}
 
 func (x *DynamicWebService) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[46]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[53]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4679,7 +5075,7 @@ func (x *DynamicWebService) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DynamicWebService.ProtoReflect.Descriptor instead.
 func (*DynamicWebService) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{46}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{53}
 }
 
 func (x *DynamicWebService) GetCommon() *WebServiceCommon {
@@ -4749,7 +5145,7 @@ type WFSWebServiceInput struct {
 
 func (x *WFSWebServiceInput) Reset() {
 	*x = WFSWebServiceInput{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[47]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[54]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4761,7 +5157,7 @@ func (x *WFSWebServiceInput) String() string {
 func (*WFSWebServiceInput) ProtoMessage() {}
 
 func (x *WFSWebServiceInput) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[47]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[54]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4774,7 +5170,7 @@ func (x *WFSWebServiceInput) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WFSWebServiceInput.ProtoReflect.Descriptor instead.
 func (*WFSWebServiceInput) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{47}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{54}
 }
 
 func (x *WFSWebServiceInput) GetCommon() *WebServiceCommonInput {
@@ -4866,7 +5262,7 @@ type WFSWebService struct {
 
 func (x *WFSWebService) Reset() {
 	*x = WFSWebService{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[48]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[55]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4878,7 +5274,7 @@ func (x *WFSWebService) String() string {
 func (*WFSWebService) ProtoMessage() {}
 
 func (x *WFSWebService) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[48]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[55]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4891,7 +5287,7 @@ func (x *WFSWebService) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WFSWebService.ProtoReflect.Descriptor instead.
 func (*WFSWebService) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{48}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{55}
 }
 
 func (x *WFSWebService) GetCommon() *WebServiceCommon {
@@ -4987,7 +5383,7 @@ type WMSWebServiceInput struct {
 
 func (x *WMSWebServiceInput) Reset() {
 	*x = WMSWebServiceInput{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[49]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[56]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4999,7 +5395,7 @@ func (x *WMSWebServiceInput) String() string {
 func (*WMSWebServiceInput) ProtoMessage() {}
 
 func (x *WMSWebServiceInput) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[49]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[56]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5012,7 +5408,7 @@ func (x *WMSWebServiceInput) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WMSWebServiceInput.ProtoReflect.Descriptor instead.
 func (*WMSWebServiceInput) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{49}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{56}
 }
 
 func (x *WMSWebServiceInput) GetCommon() *WebServiceCommonInput {
@@ -5087,7 +5483,7 @@ type WMSWebService struct {
 
 func (x *WMSWebService) Reset() {
 	*x = WMSWebService{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[50]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[57]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5099,7 +5495,7 @@ func (x *WMSWebService) String() string {
 func (*WMSWebService) ProtoMessage() {}
 
 func (x *WMSWebService) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[50]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[57]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5112,7 +5508,7 @@ func (x *WMSWebService) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WMSWebService.ProtoReflect.Descriptor instead.
 func (*WMSWebService) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{50}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{57}
 }
 
 func (x *WMSWebService) GetCommon() *WebServiceCommon {
@@ -5184,7 +5580,7 @@ type WMSLayer struct {
 
 func (x *WMSLayer) Reset() {
 	*x = WMSLayer{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[51]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[58]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5196,7 +5592,7 @@ func (x *WMSLayer) String() string {
 func (*WMSLayer) ProtoMessage() {}
 
 func (x *WMSLayer) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[51]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[58]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5209,7 +5605,7 @@ func (x *WMSLayer) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WMSLayer.ProtoReflect.Descriptor instead.
 func (*WMSLayer) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{51}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{58}
 }
 
 func (x *WMSLayer) GetName() string {
@@ -5259,7 +5655,7 @@ type WMSLayerInput struct {
 
 func (x *WMSLayerInput) Reset() {
 	*x = WMSLayerInput{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[52]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[59]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5271,7 +5667,7 @@ func (x *WMSLayerInput) String() string {
 func (*WMSLayerInput) ProtoMessage() {}
 
 func (x *WMSLayerInput) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[52]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[59]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5284,7 +5680,7 @@ func (x *WMSLayerInput) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WMSLayerInput.ProtoReflect.Descriptor instead.
 func (*WMSLayerInput) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{52}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{59}
 }
 
 func (x *WMSLayerInput) GetName() string {
@@ -5329,7 +5725,7 @@ type WMTSWebServiceInput struct {
 
 func (x *WMTSWebServiceInput) Reset() {
 	*x = WMTSWebServiceInput{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[53]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[60]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5341,7 +5737,7 @@ func (x *WMTSWebServiceInput) String() string {
 func (*WMTSWebServiceInput) ProtoMessage() {}
 
 func (x *WMTSWebServiceInput) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[53]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[60]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5354,7 +5750,7 @@ func (x *WMTSWebServiceInput) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WMTSWebServiceInput.ProtoReflect.Descriptor instead.
 func (*WMTSWebServiceInput) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{53}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{60}
 }
 
 func (x *WMTSWebServiceInput) GetCommon() *WebServiceCommonInput {
@@ -5413,7 +5809,7 @@ type WMTSWebService struct {
 
 func (x *WMTSWebService) Reset() {
 	*x = WMTSWebService{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[54]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[61]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5425,7 +5821,7 @@ func (x *WMTSWebService) String() string {
 func (*WMTSWebService) ProtoMessage() {}
 
 func (x *WMTSWebService) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[54]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[61]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5438,7 +5834,7 @@ func (x *WMTSWebService) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WMTSWebService.ProtoReflect.Descriptor instead.
 func (*WMTSWebService) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{54}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{61}
 }
 
 func (x *WMTSWebService) GetCommon() *WebServiceCommon {
@@ -5496,7 +5892,7 @@ type WMTSLayer struct {
 
 func (x *WMTSLayer) Reset() {
 	*x = WMTSLayer{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[55]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[62]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5508,7 +5904,7 @@ func (x *WMTSLayer) String() string {
 func (*WMTSLayer) ProtoMessage() {}
 
 func (x *WMTSLayer) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[55]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[62]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5521,7 +5917,7 @@ func (x *WMTSLayer) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WMTSLayer.ProtoReflect.Descriptor instead.
 func (*WMTSLayer) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{55}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{62}
 }
 
 func (x *WMTSLayer) GetName() string {
@@ -5571,7 +5967,7 @@ type WMTSLayerInput struct {
 
 func (x *WMTSLayerInput) Reset() {
 	*x = WMTSLayerInput{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[56]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[63]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5583,7 +5979,7 @@ func (x *WMTSLayerInput) String() string {
 func (*WMTSLayerInput) ProtoMessage() {}
 
 func (x *WMTSLayerInput) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[56]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[63]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5596,7 +5992,7 @@ func (x *WMTSLayerInput) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WMTSLayerInput.ProtoReflect.Descriptor instead.
 func (*WMTSLayerInput) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{56}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{63}
 }
 
 func (x *WMTSLayerInput) GetName() string {
@@ -5637,7 +6033,7 @@ type DownloadableFile struct {
 
 func (x *DownloadableFile) Reset() {
 	*x = DownloadableFile{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[57]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[64]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5649,7 +6045,7 @@ func (x *DownloadableFile) String() string {
 func (*DownloadableFile) ProtoMessage() {}
 
 func (x *DownloadableFile) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[57]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[64]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5662,7 +6058,7 @@ func (x *DownloadableFile) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DownloadableFile.ProtoReflect.Descriptor instead.
 func (*DownloadableFile) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{57}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{64}
 }
 
 func (x *DownloadableFile) GetUrl() string {
@@ -5706,7 +6102,7 @@ type ParameterInput struct {
 
 func (x *ParameterInput) Reset() {
 	*x = ParameterInput{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[58]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[65]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5718,7 +6114,7 @@ func (x *ParameterInput) String() string {
 func (*ParameterInput) ProtoMessage() {}
 
 func (x *ParameterInput) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[58]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[65]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5731,7 +6127,7 @@ func (x *ParameterInput) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ParameterInput.ProtoReflect.Descriptor instead.
 func (*ParameterInput) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{58}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{65}
 }
 
 func (x *ParameterInput) GetPosition() int32 {
@@ -5933,7 +6329,7 @@ type Parameter struct {
 
 func (x *Parameter) Reset() {
 	*x = Parameter{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[59]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[66]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5945,7 +6341,7 @@ func (x *Parameter) String() string {
 func (*Parameter) ProtoMessage() {}
 
 func (x *Parameter) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[59]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[66]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5958,7 +6354,7 @@ func (x *Parameter) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Parameter.ProtoReflect.Descriptor instead.
 func (*Parameter) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{59}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{66}
 }
 
 func (x *Parameter) GetPosition() int32 {
@@ -6163,7 +6559,7 @@ type ScalarParameterInput struct {
 
 func (x *ScalarParameterInput) Reset() {
 	*x = ScalarParameterInput{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[60]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[67]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6175,7 +6571,7 @@ func (x *ScalarParameterInput) String() string {
 func (*ScalarParameterInput) ProtoMessage() {}
 
 func (x *ScalarParameterInput) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[60]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[67]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6188,7 +6584,7 @@ func (x *ScalarParameterInput) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ScalarParameterInput.ProtoReflect.Descriptor instead.
 func (*ScalarParameterInput) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{60}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{67}
 }
 
 func (x *ScalarParameterInput) GetPosition() int32 {
@@ -6358,7 +6754,7 @@ type ScalarParameter struct {
 
 func (x *ScalarParameter) Reset() {
 	*x = ScalarParameter{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[61]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[68]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6370,7 +6766,7 @@ func (x *ScalarParameter) String() string {
 func (*ScalarParameter) ProtoMessage() {}
 
 func (x *ScalarParameter) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[61]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[68]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6383,7 +6779,7 @@ func (x *ScalarParameter) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ScalarParameter.ProtoReflect.Descriptor instead.
 func (*ScalarParameter) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{61}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{68}
 }
 
 func (x *ScalarParameter) GetPosition() int32 {
@@ -6545,7 +6941,7 @@ type StringEnumOption struct {
 
 func (x *StringEnumOption) Reset() {
 	*x = StringEnumOption{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[62]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[69]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6557,7 +6953,7 @@ func (x *StringEnumOption) String() string {
 func (*StringEnumOption) ProtoMessage() {}
 
 func (x *StringEnumOption) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[62]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[69]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6570,7 +6966,7 @@ func (x *StringEnumOption) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StringEnumOption.ProtoReflect.Descriptor instead.
 func (*StringEnumOption) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{62}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{69}
 }
 
 func (x *StringEnumOption) GetValue() string {
@@ -6597,7 +6993,7 @@ type IntegerEnumOption struct {
 
 func (x *IntegerEnumOption) Reset() {
 	*x = IntegerEnumOption{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[63]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[70]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6609,7 +7005,7 @@ func (x *IntegerEnumOption) String() string {
 func (*IntegerEnumOption) ProtoMessage() {}
 
 func (x *IntegerEnumOption) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[63]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[70]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6622,7 +7018,7 @@ func (x *IntegerEnumOption) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IntegerEnumOption.ProtoReflect.Descriptor instead.
 func (*IntegerEnumOption) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{63}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{70}
 }
 
 func (x *IntegerEnumOption) GetValue() int64 {
@@ -6649,7 +7045,7 @@ type FloatEnumOption struct {
 
 func (x *FloatEnumOption) Reset() {
 	*x = FloatEnumOption{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[64]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[71]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6661,7 +7057,7 @@ func (x *FloatEnumOption) String() string {
 func (*FloatEnumOption) ProtoMessage() {}
 
 func (x *FloatEnumOption) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[64]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[71]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6674,7 +7070,7 @@ func (x *FloatEnumOption) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FloatEnumOption.ProtoReflect.Descriptor instead.
 func (*FloatEnumOption) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{64}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{71}
 }
 
 func (x *FloatEnumOption) GetValue() float64 {
@@ -6703,7 +7099,7 @@ type StringParameter struct {
 
 func (x *StringParameter) Reset() {
 	*x = StringParameter{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[65]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[72]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6715,7 +7111,7 @@ func (x *StringParameter) String() string {
 func (*StringParameter) ProtoMessage() {}
 
 func (x *StringParameter) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[65]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[72]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6728,7 +7124,7 @@ func (x *StringParameter) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StringParameter.ProtoReflect.Descriptor instead.
 func (*StringParameter) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{65}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{72}
 }
 
 func (x *StringParameter) GetDefault() []string {
@@ -6768,7 +7164,7 @@ type BooleanParameter struct {
 
 func (x *BooleanParameter) Reset() {
 	*x = BooleanParameter{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[66]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[73]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6780,7 +7176,7 @@ func (x *BooleanParameter) String() string {
 func (*BooleanParameter) ProtoMessage() {}
 
 func (x *BooleanParameter) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[66]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[73]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6793,7 +7189,7 @@ func (x *BooleanParameter) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BooleanParameter.ProtoReflect.Descriptor instead.
 func (*BooleanParameter) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{66}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{73}
 }
 
 func (x *BooleanParameter) GetDefault() bool {
@@ -6816,7 +7212,7 @@ type IntegerParameter struct {
 
 func (x *IntegerParameter) Reset() {
 	*x = IntegerParameter{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[67]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[74]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6828,7 +7224,7 @@ func (x *IntegerParameter) String() string {
 func (*IntegerParameter) ProtoMessage() {}
 
 func (x *IntegerParameter) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[67]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[74]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6841,7 +7237,7 @@ func (x *IntegerParameter) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IntegerParameter.ProtoReflect.Descriptor instead.
 func (*IntegerParameter) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{67}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{74}
 }
 
 func (x *IntegerParameter) GetMinimum() int64 {
@@ -6892,7 +7288,7 @@ type FloatParameter struct {
 
 func (x *FloatParameter) Reset() {
 	*x = FloatParameter{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[68]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[75]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6904,7 +7300,7 @@ func (x *FloatParameter) String() string {
 func (*FloatParameter) ProtoMessage() {}
 
 func (x *FloatParameter) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[68]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[75]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6917,7 +7313,7 @@ func (x *FloatParameter) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FloatParameter.ProtoReflect.Descriptor instead.
 func (*FloatParameter) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{68}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{75}
 }
 
 func (x *FloatParameter) GetMinimum() float64 {
@@ -6967,7 +7363,7 @@ type DateTimeParameter struct {
 
 func (x *DateTimeParameter) Reset() {
 	*x = DateTimeParameter{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[69]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[76]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -6979,7 +7375,7 @@ func (x *DateTimeParameter) String() string {
 func (*DateTimeParameter) ProtoMessage() {}
 
 func (x *DateTimeParameter) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[69]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[76]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6992,7 +7388,7 @@ func (x *DateTimeParameter) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DateTimeParameter.ProtoReflect.Descriptor instead.
 func (*DateTimeParameter) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{69}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{76}
 }
 
 func (x *DateTimeParameter) GetMinimum() *timestamppb.Timestamp {
@@ -7033,7 +7429,7 @@ type TemplateParameter struct {
 
 func (x *TemplateParameter) Reset() {
 	*x = TemplateParameter{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[70]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[77]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7045,7 +7441,7 @@ func (x *TemplateParameter) String() string {
 func (*TemplateParameter) ProtoMessage() {}
 
 func (x *TemplateParameter) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[70]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[77]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7058,7 +7454,7 @@ func (x *TemplateParameter) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TemplateParameter.ProtoReflect.Descriptor instead.
 func (*TemplateParameter) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{70}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{77}
 }
 
 func (x *TemplateParameter) GetTemplate() string {
@@ -7085,7 +7481,7 @@ type TemplateParameterInput struct {
 
 func (x *TemplateParameterInput) Reset() {
 	*x = TemplateParameterInput{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[71]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[78]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7097,7 +7493,7 @@ func (x *TemplateParameterInput) String() string {
 func (*TemplateParameterInput) ProtoMessage() {}
 
 func (x *TemplateParameterInput) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[71]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[78]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7110,7 +7506,7 @@ func (x *TemplateParameterInput) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TemplateParameterInput.ProtoReflect.Descriptor instead.
 func (*TemplateParameterInput) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{71}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{78}
 }
 
 func (x *TemplateParameterInput) GetTemplate() string {
@@ -7138,7 +7534,7 @@ type ScalarStringParameter struct {
 
 func (x *ScalarStringParameter) Reset() {
 	*x = ScalarStringParameter{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[72]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[79]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7150,7 +7546,7 @@ func (x *ScalarStringParameter) String() string {
 func (*ScalarStringParameter) ProtoMessage() {}
 
 func (x *ScalarStringParameter) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[72]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[79]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7163,7 +7559,7 @@ func (x *ScalarStringParameter) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ScalarStringParameter.ProtoReflect.Descriptor instead.
 func (*ScalarStringParameter) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{72}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{79}
 }
 
 func (x *ScalarStringParameter) GetDefault() []string {
@@ -7196,7 +7592,7 @@ type ScalarBooleanParameter struct {
 
 func (x *ScalarBooleanParameter) Reset() {
 	*x = ScalarBooleanParameter{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[73]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[80]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7208,7 +7604,7 @@ func (x *ScalarBooleanParameter) String() string {
 func (*ScalarBooleanParameter) ProtoMessage() {}
 
 func (x *ScalarBooleanParameter) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[73]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[80]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7221,7 +7617,7 @@ func (x *ScalarBooleanParameter) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ScalarBooleanParameter.ProtoReflect.Descriptor instead.
 func (*ScalarBooleanParameter) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{73}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{80}
 }
 
 func (x *ScalarBooleanParameter) GetDefault() bool {
@@ -7243,7 +7639,7 @@ type ScalarIntegerParameter struct {
 
 func (x *ScalarIntegerParameter) Reset() {
 	*x = ScalarIntegerParameter{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[74]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[81]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7255,7 +7651,7 @@ func (x *ScalarIntegerParameter) String() string {
 func (*ScalarIntegerParameter) ProtoMessage() {}
 
 func (x *ScalarIntegerParameter) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[74]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[81]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7268,7 +7664,7 @@ func (x *ScalarIntegerParameter) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ScalarIntegerParameter.ProtoReflect.Descriptor instead.
 func (*ScalarIntegerParameter) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{74}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{81}
 }
 
 func (x *ScalarIntegerParameter) GetMinimum() int64 {
@@ -7311,7 +7707,7 @@ type ScalarFloatParameter struct {
 
 func (x *ScalarFloatParameter) Reset() {
 	*x = ScalarFloatParameter{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[75]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[82]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7323,7 +7719,7 @@ func (x *ScalarFloatParameter) String() string {
 func (*ScalarFloatParameter) ProtoMessage() {}
 
 func (x *ScalarFloatParameter) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[75]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[82]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7336,7 +7732,7 @@ func (x *ScalarFloatParameter) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ScalarFloatParameter.ProtoReflect.Descriptor instead.
 func (*ScalarFloatParameter) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{75}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{82}
 }
 
 func (x *ScalarFloatParameter) GetMinimum() float64 {
@@ -7379,7 +7775,7 @@ type ScalarDateTimeParameter struct {
 
 func (x *ScalarDateTimeParameter) Reset() {
 	*x = ScalarDateTimeParameter{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[76]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[83]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7391,7 +7787,7 @@ func (x *ScalarDateTimeParameter) String() string {
 func (*ScalarDateTimeParameter) ProtoMessage() {}
 
 func (x *ScalarDateTimeParameter) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[76]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[83]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7404,7 +7800,7 @@ func (x *ScalarDateTimeParameter) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ScalarDateTimeParameter.ProtoReflect.Descriptor instead.
 func (*ScalarDateTimeParameter) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{76}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{83}
 }
 
 func (x *ScalarDateTimeParameter) GetMinimum() *timestamppb.Timestamp {
@@ -7456,7 +7852,7 @@ type SoftwareApplicationInput struct {
 
 func (x *SoftwareApplicationInput) Reset() {
 	*x = SoftwareApplicationInput{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[77]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[84]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7468,7 +7864,7 @@ func (x *SoftwareApplicationInput) String() string {
 func (*SoftwareApplicationInput) ProtoMessage() {}
 
 func (x *SoftwareApplicationInput) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[77]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[84]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7481,7 +7877,7 @@ func (x *SoftwareApplicationInput) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SoftwareApplicationInput.ProtoReflect.Descriptor instead.
 func (*SoftwareApplicationInput) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{77}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{84}
 }
 
 func (x *SoftwareApplicationInput) GetName() string {
@@ -7597,7 +7993,7 @@ type SoftwareSourceCodeInput struct {
 
 func (x *SoftwareSourceCodeInput) Reset() {
 	*x = SoftwareSourceCodeInput{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[78]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[85]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7609,7 +8005,7 @@ func (x *SoftwareSourceCodeInput) String() string {
 func (*SoftwareSourceCodeInput) ProtoMessage() {}
 
 func (x *SoftwareSourceCodeInput) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[78]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[85]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7622,7 +8018,7 @@ func (x *SoftwareSourceCodeInput) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SoftwareSourceCodeInput.ProtoReflect.Descriptor instead.
 func (*SoftwareSourceCodeInput) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{78}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{85}
 }
 
 func (x *SoftwareSourceCodeInput) GetName() string {
@@ -7734,7 +8130,7 @@ type DiscardResourceDraftRequest struct {
 
 func (x *DiscardResourceDraftRequest) Reset() {
 	*x = DiscardResourceDraftRequest{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[79]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[86]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7746,7 +8142,7 @@ func (x *DiscardResourceDraftRequest) String() string {
 func (*DiscardResourceDraftRequest) ProtoMessage() {}
 
 func (x *DiscardResourceDraftRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[79]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[86]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7759,7 +8155,7 @@ func (x *DiscardResourceDraftRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DiscardResourceDraftRequest.ProtoReflect.Descriptor instead.
 func (*DiscardResourceDraftRequest) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{79}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{86}
 }
 
 func (x *DiscardResourceDraftRequest) GetResourceType() ResourceType {
@@ -7794,7 +8190,7 @@ type SubmitResourceRequest struct {
 
 func (x *SubmitResourceRequest) Reset() {
 	*x = SubmitResourceRequest{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[80]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[87]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7806,7 +8202,7 @@ func (x *SubmitResourceRequest) String() string {
 func (*SubmitResourceRequest) ProtoMessage() {}
 
 func (x *SubmitResourceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[80]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[87]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7819,7 +8215,7 @@ func (x *SubmitResourceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SubmitResourceRequest.ProtoReflect.Descriptor instead.
 func (*SubmitResourceRequest) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{80}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{87}
 }
 
 func (x *SubmitResourceRequest) GetResourceType() ResourceType {
@@ -7854,7 +8250,7 @@ type WithdrawResourceRequest struct {
 
 func (x *WithdrawResourceRequest) Reset() {
 	*x = WithdrawResourceRequest{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[81]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[88]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7866,7 +8262,7 @@ func (x *WithdrawResourceRequest) String() string {
 func (*WithdrawResourceRequest) ProtoMessage() {}
 
 func (x *WithdrawResourceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[81]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[88]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7879,7 +8275,7 @@ func (x *WithdrawResourceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WithdrawResourceRequest.ProtoReflect.Descriptor instead.
 func (*WithdrawResourceRequest) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{81}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{88}
 }
 
 func (x *WithdrawResourceRequest) GetResourceType() ResourceType {
@@ -7914,7 +8310,7 @@ type ReopenResourceRequest struct {
 
 func (x *ReopenResourceRequest) Reset() {
 	*x = ReopenResourceRequest{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[82]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[89]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7926,7 +8322,7 @@ func (x *ReopenResourceRequest) String() string {
 func (*ReopenResourceRequest) ProtoMessage() {}
 
 func (x *ReopenResourceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[82]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[89]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7939,7 +8335,7 @@ func (x *ReopenResourceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReopenResourceRequest.ProtoReflect.Descriptor instead.
 func (*ReopenResourceRequest) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{82}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{89}
 }
 
 func (x *ReopenResourceRequest) GetResourceType() ResourceType {
@@ -7974,7 +8370,7 @@ type PublishResourceRequest struct {
 
 func (x *PublishResourceRequest) Reset() {
 	*x = PublishResourceRequest{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[83]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[90]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -7986,7 +8382,7 @@ func (x *PublishResourceRequest) String() string {
 func (*PublishResourceRequest) ProtoMessage() {}
 
 func (x *PublishResourceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[83]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[90]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7999,7 +8395,7 @@ func (x *PublishResourceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PublishResourceRequest.ProtoReflect.Descriptor instead.
 func (*PublishResourceRequest) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{83}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{90}
 }
 
 func (x *PublishResourceRequest) GetResourceType() ResourceType {
@@ -8034,7 +8430,7 @@ type UnpublishResourceRequest struct {
 
 func (x *UnpublishResourceRequest) Reset() {
 	*x = UnpublishResourceRequest{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[84]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[91]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8046,7 +8442,7 @@ func (x *UnpublishResourceRequest) String() string {
 func (*UnpublishResourceRequest) ProtoMessage() {}
 
 func (x *UnpublishResourceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[84]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[91]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8059,7 +8455,7 @@ func (x *UnpublishResourceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UnpublishResourceRequest.ProtoReflect.Descriptor instead.
 func (*UnpublishResourceRequest) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{84}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{91}
 }
 
 func (x *UnpublishResourceRequest) GetResourceType() ResourceType {
@@ -8093,7 +8489,7 @@ type SubmitResourceResponse struct {
 
 func (x *SubmitResourceResponse) Reset() {
 	*x = SubmitResourceResponse{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[85]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[92]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8105,7 +8501,7 @@ func (x *SubmitResourceResponse) String() string {
 func (*SubmitResourceResponse) ProtoMessage() {}
 
 func (x *SubmitResourceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[85]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[92]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8118,7 +8514,7 @@ func (x *SubmitResourceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SubmitResourceResponse.ProtoReflect.Descriptor instead.
 func (*SubmitResourceResponse) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{85}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{92}
 }
 
 func (x *SubmitResourceResponse) GetResource() *ResourceRecord {
@@ -8144,7 +8540,7 @@ type WithdrawResourceResponse struct {
 
 func (x *WithdrawResourceResponse) Reset() {
 	*x = WithdrawResourceResponse{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[86]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[93]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8156,7 +8552,7 @@ func (x *WithdrawResourceResponse) String() string {
 func (*WithdrawResourceResponse) ProtoMessage() {}
 
 func (x *WithdrawResourceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[86]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[93]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8169,7 +8565,7 @@ func (x *WithdrawResourceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WithdrawResourceResponse.ProtoReflect.Descriptor instead.
 func (*WithdrawResourceResponse) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{86}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{93}
 }
 
 func (x *WithdrawResourceResponse) GetResource() *ResourceRecord {
@@ -8188,7 +8584,7 @@ type ReopenResourceResponse struct {
 
 func (x *ReopenResourceResponse) Reset() {
 	*x = ReopenResourceResponse{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[87]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[94]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8200,7 +8596,7 @@ func (x *ReopenResourceResponse) String() string {
 func (*ReopenResourceResponse) ProtoMessage() {}
 
 func (x *ReopenResourceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[87]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[94]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8213,7 +8609,7 @@ func (x *ReopenResourceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReopenResourceResponse.ProtoReflect.Descriptor instead.
 func (*ReopenResourceResponse) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{87}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{94}
 }
 
 func (x *ReopenResourceResponse) GetResource() *ResourceRecord {
@@ -8233,7 +8629,7 @@ type PublishResourceResponse struct {
 
 func (x *PublishResourceResponse) Reset() {
 	*x = PublishResourceResponse{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[88]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[95]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8245,7 +8641,7 @@ func (x *PublishResourceResponse) String() string {
 func (*PublishResourceResponse) ProtoMessage() {}
 
 func (x *PublishResourceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[88]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[95]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8258,7 +8654,7 @@ func (x *PublishResourceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PublishResourceResponse.ProtoReflect.Descriptor instead.
 func (*PublishResourceResponse) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{88}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{95}
 }
 
 func (x *PublishResourceResponse) GetResource() *ResourceRecord {
@@ -8285,7 +8681,7 @@ type UnpublishResourceResponse struct {
 
 func (x *UnpublishResourceResponse) Reset() {
 	*x = UnpublishResourceResponse{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[89]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[96]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8297,7 +8693,7 @@ func (x *UnpublishResourceResponse) String() string {
 func (*UnpublishResourceResponse) ProtoMessage() {}
 
 func (x *UnpublishResourceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[89]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[96]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8310,7 +8706,7 @@ func (x *UnpublishResourceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UnpublishResourceResponse.ProtoReflect.Descriptor instead.
 func (*UnpublishResourceResponse) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{89}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{96}
 }
 
 func (x *UnpublishResourceResponse) GetResource() *ResourceRecord {
@@ -8336,7 +8732,7 @@ type DiscardResourceDraftResponse struct {
 
 func (x *DiscardResourceDraftResponse) Reset() {
 	*x = DiscardResourceDraftResponse{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[90]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[97]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8348,7 +8744,7 @@ func (x *DiscardResourceDraftResponse) String() string {
 func (*DiscardResourceDraftResponse) ProtoMessage() {}
 
 func (x *DiscardResourceDraftResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[90]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[97]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8361,7 +8757,7 @@ func (x *DiscardResourceDraftResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DiscardResourceDraftResponse.ProtoReflect.Descriptor instead.
 func (*DiscardResourceDraftResponse) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{90}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{97}
 }
 
 func (x *DiscardResourceDraftResponse) GetRemovedDistributionIds() []string {
@@ -8383,7 +8779,7 @@ type RejectResourceRequest struct {
 
 func (x *RejectResourceRequest) Reset() {
 	*x = RejectResourceRequest{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[91]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[98]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8395,7 +8791,7 @@ func (x *RejectResourceRequest) String() string {
 func (*RejectResourceRequest) ProtoMessage() {}
 
 func (x *RejectResourceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[91]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[98]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8408,7 +8804,7 @@ func (x *RejectResourceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RejectResourceRequest.ProtoReflect.Descriptor instead.
 func (*RejectResourceRequest) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{91}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{98}
 }
 
 func (x *RejectResourceRequest) GetResourceType() ResourceType {
@@ -8449,7 +8845,7 @@ type RejectResourceResponse struct {
 
 func (x *RejectResourceResponse) Reset() {
 	*x = RejectResourceResponse{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[92]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[99]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8461,7 +8857,7 @@ func (x *RejectResourceResponse) String() string {
 func (*RejectResourceResponse) ProtoMessage() {}
 
 func (x *RejectResourceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[92]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[99]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8474,7 +8870,7 @@ func (x *RejectResourceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RejectResourceResponse.ProtoReflect.Descriptor instead.
 func (*RejectResourceResponse) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{92}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{99}
 }
 
 func (x *RejectResourceResponse) GetResource() *ResourceRecord {
@@ -8501,7 +8897,7 @@ type DraftResourceFromPublicationRequest struct {
 
 func (x *DraftResourceFromPublicationRequest) Reset() {
 	*x = DraftResourceFromPublicationRequest{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[93]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[100]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8513,7 +8909,7 @@ func (x *DraftResourceFromPublicationRequest) String() string {
 func (*DraftResourceFromPublicationRequest) ProtoMessage() {}
 
 func (x *DraftResourceFromPublicationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[93]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[100]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8526,7 +8922,7 @@ func (x *DraftResourceFromPublicationRequest) ProtoReflect() protoreflect.Messag
 
 // Deprecated: Use DraftResourceFromPublicationRequest.ProtoReflect.Descriptor instead.
 func (*DraftResourceFromPublicationRequest) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{93}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{100}
 }
 
 func (x *DraftResourceFromPublicationRequest) GetResourceType() ResourceType {
@@ -8554,7 +8950,7 @@ type DraftResourceFromPublicationResponse struct {
 
 func (x *DraftResourceFromPublicationResponse) Reset() {
 	*x = DraftResourceFromPublicationResponse{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[94]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[101]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8566,7 +8962,7 @@ func (x *DraftResourceFromPublicationResponse) String() string {
 func (*DraftResourceFromPublicationResponse) ProtoMessage() {}
 
 func (x *DraftResourceFromPublicationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[94]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[101]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8579,7 +8975,7 @@ func (x *DraftResourceFromPublicationResponse) ProtoReflect() protoreflect.Messa
 
 // Deprecated: Use DraftResourceFromPublicationResponse.ProtoReflect.Descriptor instead.
 func (*DraftResourceFromPublicationResponse) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{94}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{101}
 }
 
 func (x *DraftResourceFromPublicationResponse) GetResource() *ResourceRecord {
@@ -8606,7 +9002,7 @@ type DraftResourceFromLatestArchiveRequest struct {
 
 func (x *DraftResourceFromLatestArchiveRequest) Reset() {
 	*x = DraftResourceFromLatestArchiveRequest{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[95]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[102]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8618,7 +9014,7 @@ func (x *DraftResourceFromLatestArchiveRequest) String() string {
 func (*DraftResourceFromLatestArchiveRequest) ProtoMessage() {}
 
 func (x *DraftResourceFromLatestArchiveRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[95]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[102]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8631,7 +9027,7 @@ func (x *DraftResourceFromLatestArchiveRequest) ProtoReflect() protoreflect.Mess
 
 // Deprecated: Use DraftResourceFromLatestArchiveRequest.ProtoReflect.Descriptor instead.
 func (*DraftResourceFromLatestArchiveRequest) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{95}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{102}
 }
 
 func (x *DraftResourceFromLatestArchiveRequest) GetResourceType() ResourceType {
@@ -8659,7 +9055,7 @@ type DraftResourceFromLatestArchiveResponse struct {
 
 func (x *DraftResourceFromLatestArchiveResponse) Reset() {
 	*x = DraftResourceFromLatestArchiveResponse{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[96]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[103]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8671,7 +9067,7 @@ func (x *DraftResourceFromLatestArchiveResponse) String() string {
 func (*DraftResourceFromLatestArchiveResponse) ProtoMessage() {}
 
 func (x *DraftResourceFromLatestArchiveResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[96]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[103]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8684,7 +9080,7 @@ func (x *DraftResourceFromLatestArchiveResponse) ProtoReflect() protoreflect.Mes
 
 // Deprecated: Use DraftResourceFromLatestArchiveResponse.ProtoReflect.Descriptor instead.
 func (*DraftResourceFromLatestArchiveResponse) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{96}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{103}
 }
 
 func (x *DraftResourceFromLatestArchiveResponse) GetResource() *ResourceRecord {
@@ -8712,7 +9108,7 @@ type CopyPublishedResourceRequest struct {
 
 func (x *CopyPublishedResourceRequest) Reset() {
 	*x = CopyPublishedResourceRequest{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[97]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[104]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8724,7 +9120,7 @@ func (x *CopyPublishedResourceRequest) String() string {
 func (*CopyPublishedResourceRequest) ProtoMessage() {}
 
 func (x *CopyPublishedResourceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[97]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[104]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8737,7 +9133,7 @@ func (x *CopyPublishedResourceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CopyPublishedResourceRequest.ProtoReflect.Descriptor instead.
 func (*CopyPublishedResourceRequest) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{97}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{104}
 }
 
 func (x *CopyPublishedResourceRequest) GetResourceType() ResourceType {
@@ -8772,7 +9168,7 @@ type CopyPublishedResourceResponse struct {
 
 func (x *CopyPublishedResourceResponse) Reset() {
 	*x = CopyPublishedResourceResponse{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[98]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[105]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8784,7 +9180,7 @@ func (x *CopyPublishedResourceResponse) String() string {
 func (*CopyPublishedResourceResponse) ProtoMessage() {}
 
 func (x *CopyPublishedResourceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[98]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[105]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8797,7 +9193,7 @@ func (x *CopyPublishedResourceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CopyPublishedResourceResponse.ProtoReflect.Descriptor instead.
 func (*CopyPublishedResourceResponse) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{98}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{105}
 }
 
 func (x *CopyPublishedResourceResponse) GetResource() *ResourceRecord {
@@ -8831,7 +9227,7 @@ type ReplaceResourceDraftRequest struct {
 
 func (x *ReplaceResourceDraftRequest) Reset() {
 	*x = ReplaceResourceDraftRequest{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[99]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[106]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8843,7 +9239,7 @@ func (x *ReplaceResourceDraftRequest) String() string {
 func (*ReplaceResourceDraftRequest) ProtoMessage() {}
 
 func (x *ReplaceResourceDraftRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[99]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[106]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8856,7 +9252,7 @@ func (x *ReplaceResourceDraftRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReplaceResourceDraftRequest.ProtoReflect.Descriptor instead.
 func (*ReplaceResourceDraftRequest) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{99}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{106}
 }
 
 func (x *ReplaceResourceDraftRequest) GetRevision() int32 {
@@ -8946,7 +9342,7 @@ type ReplaceResourceDraftResponse struct {
 
 func (x *ReplaceResourceDraftResponse) Reset() {
 	*x = ReplaceResourceDraftResponse{}
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[100]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[107]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -8958,7 +9354,7 @@ func (x *ReplaceResourceDraftResponse) String() string {
 func (*ReplaceResourceDraftResponse) ProtoMessage() {}
 
 func (x *ReplaceResourceDraftResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[100]
+	mi := &file_metadata_lifecycle_v1_resource_proto_msgTypes[107]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -8971,7 +9367,7 @@ func (x *ReplaceResourceDraftResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReplaceResourceDraftResponse.ProtoReflect.Descriptor instead.
 func (*ReplaceResourceDraftResponse) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{100}
+	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{107}
 }
 
 func (x *ReplaceResourceDraftResponse) GetResource() *ResourceRecord {
@@ -9091,7 +9487,39 @@ const file_metadata_lifecycle_v1_resource_proto_rawDesc = "" +
 	"\fHeadersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\a\n" +
-	"\x05_body\"\x9c\x01\n" +
+	"\x05_body\"$\n" +
+	"\"ListMonitoringDistributionsRequest\">\n" +
+	"\x16MonitoringContactPoint\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
+	"\x05email\x18\x02 \x01(\tR\x05email\"\xec\x01\n" +
+	"\x11MonitoringRequest\x12\x16\n" +
+	"\x06method\x18\x01 \x01(\tR\x06method\x12\x10\n" +
+	"\x03url\x18\x02 \x01(\tR\x03url\x12O\n" +
+	"\aheaders\x18\x03 \x03(\v25.metadata_lifecycle.v1.MonitoringRequest.HeadersEntryR\aheaders\x12\x17\n" +
+	"\x04body\x18\x04 \x01(\fH\x00R\x04body\x88\x01\x01\x1a:\n" +
+	"\fHeadersEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\a\n" +
+	"\x05_body\"\x86\x02\n" +
+	"\x16MonitoringDistribution\x12\x1d\n" +
+	"\n" +
+	"version_id\x18\x01 \x01(\tR\tversionId\x12\x1f\n" +
+	"\vresource_id\x18\x02 \x01(\tR\n" +
+	"resourceId\x12\x12\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name\x12B\n" +
+	"\arequest\x18\x04 \x01(\v2(.metadata_lifecycle.v1.MonitoringRequestR\arequest\x12T\n" +
+	"\x0econtact_points\x18\x05 \x03(\v2-.metadata_lifecycle.v1.MonitoringContactPointR\rcontactPoints\"\x8a\x01\n" +
+	"\x0fMonitoringGroup\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12S\n" +
+	"\rdistributions\x18\x03 \x03(\v2-.metadata_lifecycle.v1.MonitoringDistributionR\rdistributions\"\x8c\x01\n" +
+	"\x11MonitoringConcept\x12\x1d\n" +
+	"\n" +
+	"concept_id\x18\x01 \x01(\tR\tconceptId\x12\x18\n" +
+	"\aconcept\x18\x02 \x01(\tR\aconcept\x12>\n" +
+	"\x06groups\x18\x03 \x03(\v2&.metadata_lifecycle.v1.MonitoringGroupR\x06groups\"k\n" +
+	"#ListMonitoringDistributionsResponse\x12D\n" +
+	"\bconcepts\x18\x01 \x03(\v2(.metadata_lifecycle.v1.MonitoringConceptR\bconcepts\"\x9c\x01\n" +
 	"\x1bListResourceVersionsRequest\x12R\n" +
 	"\rresource_type\x18\x01 \x01(\x0e2#.metadata_lifecycle.v1.ResourceTypeB\b\xbaH\x05\x82\x01\x02\x10\x01R\fresourceType\x12)\n" +
 	"\vresource_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\n" +
@@ -10007,8 +10435,9 @@ const file_metadata_lifecycle_v1_resource_proto_rawDesc = "" +
 	"\"WEB_SERVICE_PARAMETER_ROLE_MIN_LAT\x10\x06\x12&\n" +
 	"\"WEB_SERVICE_PARAMETER_ROLE_MAX_LAT\x10\a\x12(\n" +
 	"$WEB_SERVICE_PARAMETER_ROLE_LONGITUDE\x10\b\x12'\n" +
-	"#WEB_SERVICE_PARAMETER_ROLE_LATITUDE\x10\t2\xb0\x14\n" +
-	"\x0fResourceService\x12\xa0\x01\n" +
+	"#WEB_SERVICE_PARAMETER_ROLE_LATITUDE\x10\t2\xcd\x15\n" +
+	"\x0fResourceService\x12\x9a\x01\n" +
+	"\x1bListMonitoringDistributions\x129.metadata_lifecycle.v1.ListMonitoringDistributionsRequest\x1a:.metadata_lifecycle.v1.ListMonitoringDistributionsResponse\"\x04\x80\xb5\x18\x03\x12\xa0\x01\n" +
 	"\x1dRequestDistributionConversion\x12;.metadata_lifecycle.v1.RequestDistributionConversionRequest\x1a<.metadata_lifecycle.v1.RequestDistributionConversionResponse\"\x04\x80\xb5\x18\x03\x12s\n" +
 	"\x0eCreateResource\x12,.metadata_lifecycle.v1.CreateResourceRequest\x1a-.metadata_lifecycle.v1.CreateResourceResponse\"\x04\x80\xb5\x18\x03\x12\x7f\n" +
 	"\x12GetResourceVersion\x120.metadata_lifecycle.v1.GetResourceVersionRequest\x1a1.metadata_lifecycle.v1.GetResourceVersionResponse\"\x04\x80\xb5\x18\x02\x12\x8b\x01\n" +
@@ -10042,7 +10471,7 @@ func file_metadata_lifecycle_v1_resource_proto_rawDescGZIP() []byte {
 }
 
 var file_metadata_lifecycle_v1_resource_proto_enumTypes = make([]protoimpl.EnumInfo, 9)
-var file_metadata_lifecycle_v1_resource_proto_msgTypes = make([]protoimpl.MessageInfo, 105)
+var file_metadata_lifecycle_v1_resource_proto_msgTypes = make([]protoimpl.MessageInfo, 113)
 var file_metadata_lifecycle_v1_resource_proto_goTypes = []any{
 	(DatasetAccessRight)(0),                        // 0: metadata_lifecycle.v1.DatasetAccessRight
 	(DatasetAccrualPeriodicity)(0),                 // 1: metadata_lifecycle.v1.DatasetAccrualPeriodicity
@@ -10074,105 +10503,113 @@ var file_metadata_lifecycle_v1_resource_proto_goTypes = []any{
 	(*DynamicDistributionAccessInput)(nil),         // 27: metadata_lifecycle.v1.DynamicDistributionAccessInput
 	(*WFSBoundingBox)(nil),                         // 28: metadata_lifecycle.v1.WFSBoundingBox
 	(*PrepareDistributionAccessResponse)(nil),      // 29: metadata_lifecycle.v1.PrepareDistributionAccessResponse
-	(*ListResourceVersionsRequest)(nil),            // 30: metadata_lifecycle.v1.ListResourceVersionsRequest
-	(*ResourceVersionSummary)(nil),                 // 31: metadata_lifecycle.v1.ResourceVersionSummary
-	(*ListResourceVersionsResponse)(nil),           // 32: metadata_lifecycle.v1.ListResourceVersionsResponse
-	(*ResourceVersion)(nil),                        // 33: metadata_lifecycle.v1.ResourceVersion
-	(*DatasetResourceMetadata)(nil),                // 34: metadata_lifecycle.v1.DatasetResourceMetadata
-	(*SoftwareApplicationResourceMetadata)(nil),    // 35: metadata_lifecycle.v1.SoftwareApplicationResourceMetadata
-	(*SoftwareSourceCodeResourceMetadata)(nil),     // 36: metadata_lifecycle.v1.SoftwareSourceCodeResourceMetadata
-	(*ResourceRecord)(nil),                         // 37: metadata_lifecycle.v1.ResourceRecord
-	(*VersionedIdentifier)(nil),                    // 38: metadata_lifecycle.v1.VersionedIdentifier
-	(*VersionedIdentifierInput)(nil),               // 39: metadata_lifecycle.v1.VersionedIdentifierInput
-	(*Temporal)(nil),                               // 40: metadata_lifecycle.v1.Temporal
-	(*GeologicalTemporalCoverage)(nil),             // 41: metadata_lifecycle.v1.GeologicalTemporalCoverage
-	(*DatasetInput)(nil),                           // 42: metadata_lifecycle.v1.DatasetInput
-	(*DistributionInput)(nil),                      // 43: metadata_lifecycle.v1.DistributionInput
-	(*Distribution)(nil),                           // 44: metadata_lifecycle.v1.Distribution
-	(*NativeFormat)(nil),                           // 45: metadata_lifecycle.v1.NativeFormat
-	(*WebServiceInput)(nil),                        // 46: metadata_lifecycle.v1.WebServiceInput
-	(*WebServiceCommonInput)(nil),                  // 47: metadata_lifecycle.v1.WebServiceCommonInput
-	(*WebService)(nil),                             // 48: metadata_lifecycle.v1.WebService
-	(*WebServiceCommon)(nil),                       // 49: metadata_lifecycle.v1.WebServiceCommon
-	(*RequestBodyInput)(nil),                       // 50: metadata_lifecycle.v1.RequestBodyInput
-	(*RequestBody)(nil),                            // 51: metadata_lifecycle.v1.RequestBody
-	(*HTTPWebServiceInput)(nil),                    // 52: metadata_lifecycle.v1.HTTPWebServiceInput
-	(*DynamicWebServiceInput)(nil),                 // 53: metadata_lifecycle.v1.DynamicWebServiceInput
-	(*HTTPWebService)(nil),                         // 54: metadata_lifecycle.v1.HTTPWebService
-	(*DynamicWebService)(nil),                      // 55: metadata_lifecycle.v1.DynamicWebService
-	(*WFSWebServiceInput)(nil),                     // 56: metadata_lifecycle.v1.WFSWebServiceInput
-	(*WFSWebService)(nil),                          // 57: metadata_lifecycle.v1.WFSWebService
-	(*WMSWebServiceInput)(nil),                     // 58: metadata_lifecycle.v1.WMSWebServiceInput
-	(*WMSWebService)(nil),                          // 59: metadata_lifecycle.v1.WMSWebService
-	(*WMSLayer)(nil),                               // 60: metadata_lifecycle.v1.WMSLayer
-	(*WMSLayerInput)(nil),                          // 61: metadata_lifecycle.v1.WMSLayerInput
-	(*WMTSWebServiceInput)(nil),                    // 62: metadata_lifecycle.v1.WMTSWebServiceInput
-	(*WMTSWebService)(nil),                         // 63: metadata_lifecycle.v1.WMTSWebService
-	(*WMTSLayer)(nil),                              // 64: metadata_lifecycle.v1.WMTSLayer
-	(*WMTSLayerInput)(nil),                         // 65: metadata_lifecycle.v1.WMTSLayerInput
-	(*DownloadableFile)(nil),                       // 66: metadata_lifecycle.v1.DownloadableFile
-	(*ParameterInput)(nil),                         // 67: metadata_lifecycle.v1.ParameterInput
-	(*Parameter)(nil),                              // 68: metadata_lifecycle.v1.Parameter
-	(*ScalarParameterInput)(nil),                   // 69: metadata_lifecycle.v1.ScalarParameterInput
-	(*ScalarParameter)(nil),                        // 70: metadata_lifecycle.v1.ScalarParameter
-	(*StringEnumOption)(nil),                       // 71: metadata_lifecycle.v1.StringEnumOption
-	(*IntegerEnumOption)(nil),                      // 72: metadata_lifecycle.v1.IntegerEnumOption
-	(*FloatEnumOption)(nil),                        // 73: metadata_lifecycle.v1.FloatEnumOption
-	(*StringParameter)(nil),                        // 74: metadata_lifecycle.v1.StringParameter
-	(*BooleanParameter)(nil),                       // 75: metadata_lifecycle.v1.BooleanParameter
-	(*IntegerParameter)(nil),                       // 76: metadata_lifecycle.v1.IntegerParameter
-	(*FloatParameter)(nil),                         // 77: metadata_lifecycle.v1.FloatParameter
-	(*DateTimeParameter)(nil),                      // 78: metadata_lifecycle.v1.DateTimeParameter
-	(*TemplateParameter)(nil),                      // 79: metadata_lifecycle.v1.TemplateParameter
-	(*TemplateParameterInput)(nil),                 // 80: metadata_lifecycle.v1.TemplateParameterInput
-	(*ScalarStringParameter)(nil),                  // 81: metadata_lifecycle.v1.ScalarStringParameter
-	(*ScalarBooleanParameter)(nil),                 // 82: metadata_lifecycle.v1.ScalarBooleanParameter
-	(*ScalarIntegerParameter)(nil),                 // 83: metadata_lifecycle.v1.ScalarIntegerParameter
-	(*ScalarFloatParameter)(nil),                   // 84: metadata_lifecycle.v1.ScalarFloatParameter
-	(*ScalarDateTimeParameter)(nil),                // 85: metadata_lifecycle.v1.ScalarDateTimeParameter
-	(*SoftwareApplicationInput)(nil),               // 86: metadata_lifecycle.v1.SoftwareApplicationInput
-	(*SoftwareSourceCodeInput)(nil),                // 87: metadata_lifecycle.v1.SoftwareSourceCodeInput
-	(*DiscardResourceDraftRequest)(nil),            // 88: metadata_lifecycle.v1.DiscardResourceDraftRequest
-	(*SubmitResourceRequest)(nil),                  // 89: metadata_lifecycle.v1.SubmitResourceRequest
-	(*WithdrawResourceRequest)(nil),                // 90: metadata_lifecycle.v1.WithdrawResourceRequest
-	(*ReopenResourceRequest)(nil),                  // 91: metadata_lifecycle.v1.ReopenResourceRequest
-	(*PublishResourceRequest)(nil),                 // 92: metadata_lifecycle.v1.PublishResourceRequest
-	(*UnpublishResourceRequest)(nil),               // 93: metadata_lifecycle.v1.UnpublishResourceRequest
-	(*SubmitResourceResponse)(nil),                 // 94: metadata_lifecycle.v1.SubmitResourceResponse
-	(*WithdrawResourceResponse)(nil),               // 95: metadata_lifecycle.v1.WithdrawResourceResponse
-	(*ReopenResourceResponse)(nil),                 // 96: metadata_lifecycle.v1.ReopenResourceResponse
-	(*PublishResourceResponse)(nil),                // 97: metadata_lifecycle.v1.PublishResourceResponse
-	(*UnpublishResourceResponse)(nil),              // 98: metadata_lifecycle.v1.UnpublishResourceResponse
-	(*DiscardResourceDraftResponse)(nil),           // 99: metadata_lifecycle.v1.DiscardResourceDraftResponse
-	(*RejectResourceRequest)(nil),                  // 100: metadata_lifecycle.v1.RejectResourceRequest
-	(*RejectResourceResponse)(nil),                 // 101: metadata_lifecycle.v1.RejectResourceResponse
-	(*DraftResourceFromPublicationRequest)(nil),    // 102: metadata_lifecycle.v1.DraftResourceFromPublicationRequest
-	(*DraftResourceFromPublicationResponse)(nil),   // 103: metadata_lifecycle.v1.DraftResourceFromPublicationResponse
-	(*DraftResourceFromLatestArchiveRequest)(nil),  // 104: metadata_lifecycle.v1.DraftResourceFromLatestArchiveRequest
-	(*DraftResourceFromLatestArchiveResponse)(nil), // 105: metadata_lifecycle.v1.DraftResourceFromLatestArchiveResponse
-	(*CopyPublishedResourceRequest)(nil),           // 106: metadata_lifecycle.v1.CopyPublishedResourceRequest
-	(*CopyPublishedResourceResponse)(nil),          // 107: metadata_lifecycle.v1.CopyPublishedResourceResponse
-	(*ReplaceResourceDraftRequest)(nil),            // 108: metadata_lifecycle.v1.ReplaceResourceDraftRequest
-	(*ReplaceResourceDraftResponse)(nil),           // 109: metadata_lifecycle.v1.ReplaceResourceDraftResponse
-	nil,                                            // 110: metadata_lifecycle.v1.PrepareDistributionAccessResponse.HeadersEntry
-	nil,                                            // 111: metadata_lifecycle.v1.DraftResourceFromPublicationResponse.CopiedDistributionsEntry
-	nil,                                            // 112: metadata_lifecycle.v1.DraftResourceFromLatestArchiveResponse.CopiedDistributionsEntry
-	nil,                                            // 113: metadata_lifecycle.v1.CopyPublishedResourceResponse.CopiedDistributionsEntry
-	(ResourceType)(0),                              // 114: metadata_lifecycle.v1.ResourceType
-	(*Notification)(nil),                           // 115: metadata_lifecycle.v1.Notification
-	(VersioningStatus)(0),                          // 116: metadata_lifecycle.v1.VersioningStatus
-	(*timestamppb.Timestamp)(nil),                  // 117: google.protobuf.Timestamp
-	(*EntityReference)(nil),                        // 118: metadata_lifecycle.v1.EntityReference
+	(*ListMonitoringDistributionsRequest)(nil),     // 30: metadata_lifecycle.v1.ListMonitoringDistributionsRequest
+	(*MonitoringContactPoint)(nil),                 // 31: metadata_lifecycle.v1.MonitoringContactPoint
+	(*MonitoringRequest)(nil),                      // 32: metadata_lifecycle.v1.MonitoringRequest
+	(*MonitoringDistribution)(nil),                 // 33: metadata_lifecycle.v1.MonitoringDistribution
+	(*MonitoringGroup)(nil),                        // 34: metadata_lifecycle.v1.MonitoringGroup
+	(*MonitoringConcept)(nil),                      // 35: metadata_lifecycle.v1.MonitoringConcept
+	(*ListMonitoringDistributionsResponse)(nil),    // 36: metadata_lifecycle.v1.ListMonitoringDistributionsResponse
+	(*ListResourceVersionsRequest)(nil),            // 37: metadata_lifecycle.v1.ListResourceVersionsRequest
+	(*ResourceVersionSummary)(nil),                 // 38: metadata_lifecycle.v1.ResourceVersionSummary
+	(*ListResourceVersionsResponse)(nil),           // 39: metadata_lifecycle.v1.ListResourceVersionsResponse
+	(*ResourceVersion)(nil),                        // 40: metadata_lifecycle.v1.ResourceVersion
+	(*DatasetResourceMetadata)(nil),                // 41: metadata_lifecycle.v1.DatasetResourceMetadata
+	(*SoftwareApplicationResourceMetadata)(nil),    // 42: metadata_lifecycle.v1.SoftwareApplicationResourceMetadata
+	(*SoftwareSourceCodeResourceMetadata)(nil),     // 43: metadata_lifecycle.v1.SoftwareSourceCodeResourceMetadata
+	(*ResourceRecord)(nil),                         // 44: metadata_lifecycle.v1.ResourceRecord
+	(*VersionedIdentifier)(nil),                    // 45: metadata_lifecycle.v1.VersionedIdentifier
+	(*VersionedIdentifierInput)(nil),               // 46: metadata_lifecycle.v1.VersionedIdentifierInput
+	(*Temporal)(nil),                               // 47: metadata_lifecycle.v1.Temporal
+	(*GeologicalTemporalCoverage)(nil),             // 48: metadata_lifecycle.v1.GeologicalTemporalCoverage
+	(*DatasetInput)(nil),                           // 49: metadata_lifecycle.v1.DatasetInput
+	(*DistributionInput)(nil),                      // 50: metadata_lifecycle.v1.DistributionInput
+	(*Distribution)(nil),                           // 51: metadata_lifecycle.v1.Distribution
+	(*NativeFormat)(nil),                           // 52: metadata_lifecycle.v1.NativeFormat
+	(*WebServiceInput)(nil),                        // 53: metadata_lifecycle.v1.WebServiceInput
+	(*WebServiceCommonInput)(nil),                  // 54: metadata_lifecycle.v1.WebServiceCommonInput
+	(*WebService)(nil),                             // 55: metadata_lifecycle.v1.WebService
+	(*WebServiceCommon)(nil),                       // 56: metadata_lifecycle.v1.WebServiceCommon
+	(*RequestBodyInput)(nil),                       // 57: metadata_lifecycle.v1.RequestBodyInput
+	(*RequestBody)(nil),                            // 58: metadata_lifecycle.v1.RequestBody
+	(*HTTPWebServiceInput)(nil),                    // 59: metadata_lifecycle.v1.HTTPWebServiceInput
+	(*DynamicWebServiceInput)(nil),                 // 60: metadata_lifecycle.v1.DynamicWebServiceInput
+	(*HTTPWebService)(nil),                         // 61: metadata_lifecycle.v1.HTTPWebService
+	(*DynamicWebService)(nil),                      // 62: metadata_lifecycle.v1.DynamicWebService
+	(*WFSWebServiceInput)(nil),                     // 63: metadata_lifecycle.v1.WFSWebServiceInput
+	(*WFSWebService)(nil),                          // 64: metadata_lifecycle.v1.WFSWebService
+	(*WMSWebServiceInput)(nil),                     // 65: metadata_lifecycle.v1.WMSWebServiceInput
+	(*WMSWebService)(nil),                          // 66: metadata_lifecycle.v1.WMSWebService
+	(*WMSLayer)(nil),                               // 67: metadata_lifecycle.v1.WMSLayer
+	(*WMSLayerInput)(nil),                          // 68: metadata_lifecycle.v1.WMSLayerInput
+	(*WMTSWebServiceInput)(nil),                    // 69: metadata_lifecycle.v1.WMTSWebServiceInput
+	(*WMTSWebService)(nil),                         // 70: metadata_lifecycle.v1.WMTSWebService
+	(*WMTSLayer)(nil),                              // 71: metadata_lifecycle.v1.WMTSLayer
+	(*WMTSLayerInput)(nil),                         // 72: metadata_lifecycle.v1.WMTSLayerInput
+	(*DownloadableFile)(nil),                       // 73: metadata_lifecycle.v1.DownloadableFile
+	(*ParameterInput)(nil),                         // 74: metadata_lifecycle.v1.ParameterInput
+	(*Parameter)(nil),                              // 75: metadata_lifecycle.v1.Parameter
+	(*ScalarParameterInput)(nil),                   // 76: metadata_lifecycle.v1.ScalarParameterInput
+	(*ScalarParameter)(nil),                        // 77: metadata_lifecycle.v1.ScalarParameter
+	(*StringEnumOption)(nil),                       // 78: metadata_lifecycle.v1.StringEnumOption
+	(*IntegerEnumOption)(nil),                      // 79: metadata_lifecycle.v1.IntegerEnumOption
+	(*FloatEnumOption)(nil),                        // 80: metadata_lifecycle.v1.FloatEnumOption
+	(*StringParameter)(nil),                        // 81: metadata_lifecycle.v1.StringParameter
+	(*BooleanParameter)(nil),                       // 82: metadata_lifecycle.v1.BooleanParameter
+	(*IntegerParameter)(nil),                       // 83: metadata_lifecycle.v1.IntegerParameter
+	(*FloatParameter)(nil),                         // 84: metadata_lifecycle.v1.FloatParameter
+	(*DateTimeParameter)(nil),                      // 85: metadata_lifecycle.v1.DateTimeParameter
+	(*TemplateParameter)(nil),                      // 86: metadata_lifecycle.v1.TemplateParameter
+	(*TemplateParameterInput)(nil),                 // 87: metadata_lifecycle.v1.TemplateParameterInput
+	(*ScalarStringParameter)(nil),                  // 88: metadata_lifecycle.v1.ScalarStringParameter
+	(*ScalarBooleanParameter)(nil),                 // 89: metadata_lifecycle.v1.ScalarBooleanParameter
+	(*ScalarIntegerParameter)(nil),                 // 90: metadata_lifecycle.v1.ScalarIntegerParameter
+	(*ScalarFloatParameter)(nil),                   // 91: metadata_lifecycle.v1.ScalarFloatParameter
+	(*ScalarDateTimeParameter)(nil),                // 92: metadata_lifecycle.v1.ScalarDateTimeParameter
+	(*SoftwareApplicationInput)(nil),               // 93: metadata_lifecycle.v1.SoftwareApplicationInput
+	(*SoftwareSourceCodeInput)(nil),                // 94: metadata_lifecycle.v1.SoftwareSourceCodeInput
+	(*DiscardResourceDraftRequest)(nil),            // 95: metadata_lifecycle.v1.DiscardResourceDraftRequest
+	(*SubmitResourceRequest)(nil),                  // 96: metadata_lifecycle.v1.SubmitResourceRequest
+	(*WithdrawResourceRequest)(nil),                // 97: metadata_lifecycle.v1.WithdrawResourceRequest
+	(*ReopenResourceRequest)(nil),                  // 98: metadata_lifecycle.v1.ReopenResourceRequest
+	(*PublishResourceRequest)(nil),                 // 99: metadata_lifecycle.v1.PublishResourceRequest
+	(*UnpublishResourceRequest)(nil),               // 100: metadata_lifecycle.v1.UnpublishResourceRequest
+	(*SubmitResourceResponse)(nil),                 // 101: metadata_lifecycle.v1.SubmitResourceResponse
+	(*WithdrawResourceResponse)(nil),               // 102: metadata_lifecycle.v1.WithdrawResourceResponse
+	(*ReopenResourceResponse)(nil),                 // 103: metadata_lifecycle.v1.ReopenResourceResponse
+	(*PublishResourceResponse)(nil),                // 104: metadata_lifecycle.v1.PublishResourceResponse
+	(*UnpublishResourceResponse)(nil),              // 105: metadata_lifecycle.v1.UnpublishResourceResponse
+	(*DiscardResourceDraftResponse)(nil),           // 106: metadata_lifecycle.v1.DiscardResourceDraftResponse
+	(*RejectResourceRequest)(nil),                  // 107: metadata_lifecycle.v1.RejectResourceRequest
+	(*RejectResourceResponse)(nil),                 // 108: metadata_lifecycle.v1.RejectResourceResponse
+	(*DraftResourceFromPublicationRequest)(nil),    // 109: metadata_lifecycle.v1.DraftResourceFromPublicationRequest
+	(*DraftResourceFromPublicationResponse)(nil),   // 110: metadata_lifecycle.v1.DraftResourceFromPublicationResponse
+	(*DraftResourceFromLatestArchiveRequest)(nil),  // 111: metadata_lifecycle.v1.DraftResourceFromLatestArchiveRequest
+	(*DraftResourceFromLatestArchiveResponse)(nil), // 112: metadata_lifecycle.v1.DraftResourceFromLatestArchiveResponse
+	(*CopyPublishedResourceRequest)(nil),           // 113: metadata_lifecycle.v1.CopyPublishedResourceRequest
+	(*CopyPublishedResourceResponse)(nil),          // 114: metadata_lifecycle.v1.CopyPublishedResourceResponse
+	(*ReplaceResourceDraftRequest)(nil),            // 115: metadata_lifecycle.v1.ReplaceResourceDraftRequest
+	(*ReplaceResourceDraftResponse)(nil),           // 116: metadata_lifecycle.v1.ReplaceResourceDraftResponse
+	nil,                                            // 117: metadata_lifecycle.v1.PrepareDistributionAccessResponse.HeadersEntry
+	nil,                                            // 118: metadata_lifecycle.v1.MonitoringRequest.HeadersEntry
+	nil,                                            // 119: metadata_lifecycle.v1.DraftResourceFromPublicationResponse.CopiedDistributionsEntry
+	nil,                                            // 120: metadata_lifecycle.v1.DraftResourceFromLatestArchiveResponse.CopiedDistributionsEntry
+	nil,                                            // 121: metadata_lifecycle.v1.CopyPublishedResourceResponse.CopiedDistributionsEntry
+	(ResourceType)(0),                              // 122: metadata_lifecycle.v1.ResourceType
+	(*Notification)(nil),                           // 123: metadata_lifecycle.v1.Notification
+	(VersioningStatus)(0),                          // 124: metadata_lifecycle.v1.VersioningStatus
+	(*timestamppb.Timestamp)(nil),                  // 125: google.protobuf.Timestamp
+	(*EntityReference)(nil),                        // 126: metadata_lifecycle.v1.EntityReference
 }
 var file_metadata_lifecycle_v1_resource_proto_depIdxs = []int32{
-	42,  // 0: metadata_lifecycle.v1.CreateResourceRequest.dataset:type_name -> metadata_lifecycle.v1.DatasetInput
-	86,  // 1: metadata_lifecycle.v1.CreateResourceRequest.software_application:type_name -> metadata_lifecycle.v1.SoftwareApplicationInput
-	87,  // 2: metadata_lifecycle.v1.CreateResourceRequest.software_source_code:type_name -> metadata_lifecycle.v1.SoftwareSourceCodeInput
-	37,  // 3: metadata_lifecycle.v1.CreateResourceResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
-	114, // 4: metadata_lifecycle.v1.GetResourceVersionRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
-	33,  // 5: metadata_lifecycle.v1.GetResourceVersionResponse.resource:type_name -> metadata_lifecycle.v1.ResourceVersion
+	49,  // 0: metadata_lifecycle.v1.CreateResourceRequest.dataset:type_name -> metadata_lifecycle.v1.DatasetInput
+	93,  // 1: metadata_lifecycle.v1.CreateResourceRequest.software_application:type_name -> metadata_lifecycle.v1.SoftwareApplicationInput
+	94,  // 2: metadata_lifecycle.v1.CreateResourceRequest.software_source_code:type_name -> metadata_lifecycle.v1.SoftwareSourceCodeInput
+	44,  // 3: metadata_lifecycle.v1.CreateResourceResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
+	122, // 4: metadata_lifecycle.v1.GetResourceVersionRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
+	40,  // 5: metadata_lifecycle.v1.GetResourceVersionResponse.resource:type_name -> metadata_lifecycle.v1.ResourceVersion
 	6,   // 6: metadata_lifecycle.v1.RequestDistributionConversionRequest.visualizations:type_name -> metadata_lifecycle.v1.WebServiceVisibleOn
-	115, // 7: metadata_lifecycle.v1.RequestDistributionConversionResponse.notifications:type_name -> metadata_lifecycle.v1.Notification
+	123, // 7: metadata_lifecycle.v1.RequestDistributionConversionResponse.notifications:type_name -> metadata_lifecycle.v1.Notification
 	22,  // 8: metadata_lifecycle.v1.DistributionAccessParameterInput.scalar:type_name -> metadata_lifecycle.v1.DistributionAccessScalarValue
 	23,  // 9: metadata_lifecycle.v1.DistributionAccessParameterInput.array:type_name -> metadata_lifecycle.v1.DistributionAccessArrayValue
 	22,  // 10: metadata_lifecycle.v1.DistributionAccessArrayValue.values:type_name -> metadata_lifecycle.v1.DistributionAccessScalarValue
@@ -10184,230 +10621,238 @@ var file_metadata_lifecycle_v1_resource_proto_depIdxs = []int32{
 	21,  // 16: metadata_lifecycle.v1.WFSDistributionAccessInput.parameters:type_name -> metadata_lifecycle.v1.DistributionAccessParameterInput
 	21,  // 17: metadata_lifecycle.v1.DynamicDistributionAccessInput.parameters:type_name -> metadata_lifecycle.v1.DistributionAccessParameterInput
 	4,   // 18: metadata_lifecycle.v1.PrepareDistributionAccessResponse.method:type_name -> metadata_lifecycle.v1.WebServiceMethod
-	110, // 19: metadata_lifecycle.v1.PrepareDistributionAccessResponse.headers:type_name -> metadata_lifecycle.v1.PrepareDistributionAccessResponse.HeadersEntry
-	114, // 20: metadata_lifecycle.v1.ListResourceVersionsRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
-	114, // 21: metadata_lifecycle.v1.ResourceVersionSummary.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
-	116, // 22: metadata_lifecycle.v1.ResourceVersionSummary.status:type_name -> metadata_lifecycle.v1.VersioningStatus
-	117, // 23: metadata_lifecycle.v1.ResourceVersionSummary.created_at:type_name -> google.protobuf.Timestamp
-	117, // 24: metadata_lifecycle.v1.ResourceVersionSummary.updated_at:type_name -> google.protobuf.Timestamp
-	117, // 25: metadata_lifecycle.v1.ResourceVersionSummary.submitted_at:type_name -> google.protobuf.Timestamp
-	117, // 26: metadata_lifecycle.v1.ResourceVersionSummary.published_at:type_name -> google.protobuf.Timestamp
-	117, // 27: metadata_lifecycle.v1.ResourceVersionSummary.archived_at:type_name -> google.protobuf.Timestamp
-	117, // 28: metadata_lifecycle.v1.ResourceVersionSummary.rejected_at:type_name -> google.protobuf.Timestamp
-	31,  // 29: metadata_lifecycle.v1.ListResourceVersionsResponse.versions:type_name -> metadata_lifecycle.v1.ResourceVersionSummary
-	116, // 30: metadata_lifecycle.v1.ResourceVersion.status:type_name -> metadata_lifecycle.v1.VersioningStatus
-	117, // 31: metadata_lifecycle.v1.ResourceVersion.created_at:type_name -> google.protobuf.Timestamp
-	117, // 32: metadata_lifecycle.v1.ResourceVersion.updated_at:type_name -> google.protobuf.Timestamp
-	34,  // 33: metadata_lifecycle.v1.ResourceVersion.dataset:type_name -> metadata_lifecycle.v1.DatasetResourceMetadata
-	35,  // 34: metadata_lifecycle.v1.ResourceVersion.software_application:type_name -> metadata_lifecycle.v1.SoftwareApplicationResourceMetadata
-	36,  // 35: metadata_lifecycle.v1.ResourceVersion.software_source_code:type_name -> metadata_lifecycle.v1.SoftwareSourceCodeResourceMetadata
-	117, // 36: metadata_lifecycle.v1.ResourceVersion.rejected_at:type_name -> google.protobuf.Timestamp
-	1,   // 37: metadata_lifecycle.v1.DatasetResourceMetadata.accrual_periodicity:type_name -> metadata_lifecycle.v1.DatasetAccrualPeriodicity
-	0,   // 38: metadata_lifecycle.v1.DatasetResourceMetadata.access_right:type_name -> metadata_lifecycle.v1.DatasetAccessRight
-	44,  // 39: metadata_lifecycle.v1.DatasetResourceMetadata.distributions:type_name -> metadata_lifecycle.v1.Distribution
-	40,  // 40: metadata_lifecycle.v1.DatasetResourceMetadata.temporal_coverage:type_name -> metadata_lifecycle.v1.Temporal
-	41,  // 41: metadata_lifecycle.v1.DatasetResourceMetadata.geological_temporal_coverage:type_name -> metadata_lifecycle.v1.GeologicalTemporalCoverage
-	38,  // 42: metadata_lifecycle.v1.DatasetResourceMetadata.persistent_identifiers:type_name -> metadata_lifecycle.v1.VersionedIdentifier
-	118, // 43: metadata_lifecycle.v1.DatasetResourceMetadata.providers:type_name -> metadata_lifecycle.v1.EntityReference
-	118, // 44: metadata_lifecycle.v1.DatasetResourceMetadata.categories:type_name -> metadata_lifecycle.v1.EntityReference
-	117, // 45: metadata_lifecycle.v1.DatasetResourceMetadata.created:type_name -> google.protobuf.Timestamp
-	117, // 46: metadata_lifecycle.v1.DatasetResourceMetadata.updated:type_name -> google.protobuf.Timestamp
-	2,   // 47: metadata_lifecycle.v1.DatasetResourceMetadata.type:type_name -> metadata_lifecycle.v1.DatasetType
-	118, // 48: metadata_lifecycle.v1.SoftwareApplicationResourceMetadata.creators:type_name -> metadata_lifecycle.v1.EntityReference
-	38,  // 49: metadata_lifecycle.v1.SoftwareApplicationResourceMetadata.identifiers:type_name -> metadata_lifecycle.v1.VersionedIdentifier
-	118, // 50: metadata_lifecycle.v1.SoftwareApplicationResourceMetadata.categories:type_name -> metadata_lifecycle.v1.EntityReference
-	118, // 51: metadata_lifecycle.v1.SoftwareSourceCodeResourceMetadata.creators:type_name -> metadata_lifecycle.v1.EntityReference
-	38,  // 52: metadata_lifecycle.v1.SoftwareSourceCodeResourceMetadata.identifiers:type_name -> metadata_lifecycle.v1.VersionedIdentifier
-	118, // 53: metadata_lifecycle.v1.SoftwareSourceCodeResourceMetadata.categories:type_name -> metadata_lifecycle.v1.EntityReference
-	116, // 54: metadata_lifecycle.v1.ResourceRecord.status:type_name -> metadata_lifecycle.v1.VersioningStatus
-	117, // 55: metadata_lifecycle.v1.Temporal.start:type_name -> google.protobuf.Timestamp
-	117, // 56: metadata_lifecycle.v1.Temporal.end:type_name -> google.protobuf.Timestamp
-	1,   // 57: metadata_lifecycle.v1.DatasetInput.accrual_periodicity:type_name -> metadata_lifecycle.v1.DatasetAccrualPeriodicity
-	0,   // 58: metadata_lifecycle.v1.DatasetInput.access_right:type_name -> metadata_lifecycle.v1.DatasetAccessRight
-	43,  // 59: metadata_lifecycle.v1.DatasetInput.distributions:type_name -> metadata_lifecycle.v1.DistributionInput
-	40,  // 60: metadata_lifecycle.v1.DatasetInput.temporal_coverage:type_name -> metadata_lifecycle.v1.Temporal
-	41,  // 61: metadata_lifecycle.v1.DatasetInput.geological_temporal_coverage:type_name -> metadata_lifecycle.v1.GeologicalTemporalCoverage
-	39,  // 62: metadata_lifecycle.v1.DatasetInput.persistent_identifiers:type_name -> metadata_lifecycle.v1.VersionedIdentifierInput
-	117, // 63: metadata_lifecycle.v1.DatasetInput.created:type_name -> google.protobuf.Timestamp
-	117, // 64: metadata_lifecycle.v1.DatasetInput.updated:type_name -> google.protobuf.Timestamp
-	2,   // 65: metadata_lifecycle.v1.DatasetInput.type:type_name -> metadata_lifecycle.v1.DatasetType
-	3,   // 66: metadata_lifecycle.v1.DistributionInput.type:type_name -> metadata_lifecycle.v1.DistributionType
-	46,  // 67: metadata_lifecycle.v1.DistributionInput.web_service:type_name -> metadata_lifecycle.v1.WebServiceInput
-	66,  // 68: metadata_lifecycle.v1.DistributionInput.downloadable_file:type_name -> metadata_lifecycle.v1.DownloadableFile
-	3,   // 69: metadata_lifecycle.v1.Distribution.type:type_name -> metadata_lifecycle.v1.DistributionType
-	48,  // 70: metadata_lifecycle.v1.Distribution.web_service:type_name -> metadata_lifecycle.v1.WebService
-	66,  // 71: metadata_lifecycle.v1.Distribution.downloadable_file:type_name -> metadata_lifecycle.v1.DownloadableFile
-	52,  // 72: metadata_lifecycle.v1.WebServiceInput.http:type_name -> metadata_lifecycle.v1.HTTPWebServiceInput
-	53,  // 73: metadata_lifecycle.v1.WebServiceInput.dynamic:type_name -> metadata_lifecycle.v1.DynamicWebServiceInput
-	56,  // 74: metadata_lifecycle.v1.WebServiceInput.wfs:type_name -> metadata_lifecycle.v1.WFSWebServiceInput
-	58,  // 75: metadata_lifecycle.v1.WebServiceInput.wms:type_name -> metadata_lifecycle.v1.WMSWebServiceInput
-	62,  // 76: metadata_lifecycle.v1.WebServiceInput.wmts:type_name -> metadata_lifecycle.v1.WMTSWebServiceInput
-	6,   // 77: metadata_lifecycle.v1.WebServiceCommonInput.visible_on:type_name -> metadata_lifecycle.v1.WebServiceVisibleOn
-	54,  // 78: metadata_lifecycle.v1.WebService.http:type_name -> metadata_lifecycle.v1.HTTPWebService
-	55,  // 79: metadata_lifecycle.v1.WebService.dynamic:type_name -> metadata_lifecycle.v1.DynamicWebService
-	57,  // 80: metadata_lifecycle.v1.WebService.wfs:type_name -> metadata_lifecycle.v1.WFSWebService
-	59,  // 81: metadata_lifecycle.v1.WebService.wms:type_name -> metadata_lifecycle.v1.WMSWebService
-	63,  // 82: metadata_lifecycle.v1.WebService.wmts:type_name -> metadata_lifecycle.v1.WMTSWebService
-	118, // 83: metadata_lifecycle.v1.WebServiceCommon.provider_reference:type_name -> metadata_lifecycle.v1.EntityReference
-	6,   // 84: metadata_lifecycle.v1.WebServiceCommon.visible_on:type_name -> metadata_lifecycle.v1.WebServiceVisibleOn
-	69,  // 85: metadata_lifecycle.v1.RequestBodyInput.parameters:type_name -> metadata_lifecycle.v1.ScalarParameterInput
-	70,  // 86: metadata_lifecycle.v1.RequestBody.parameters:type_name -> metadata_lifecycle.v1.ScalarParameter
-	47,  // 87: metadata_lifecycle.v1.HTTPWebServiceInput.common:type_name -> metadata_lifecycle.v1.WebServiceCommonInput
-	67,  // 88: metadata_lifecycle.v1.HTTPWebServiceInput.parameters:type_name -> metadata_lifecycle.v1.ParameterInput
-	4,   // 89: metadata_lifecycle.v1.HTTPWebServiceInput.method:type_name -> metadata_lifecycle.v1.WebServiceMethod
-	50,  // 90: metadata_lifecycle.v1.HTTPWebServiceInput.body:type_name -> metadata_lifecycle.v1.RequestBodyInput
-	47,  // 91: metadata_lifecycle.v1.DynamicWebServiceInput.common:type_name -> metadata_lifecycle.v1.WebServiceCommonInput
-	67,  // 92: metadata_lifecycle.v1.DynamicWebServiceInput.parameters:type_name -> metadata_lifecycle.v1.ParameterInput
-	4,   // 93: metadata_lifecycle.v1.DynamicWebServiceInput.method:type_name -> metadata_lifecycle.v1.WebServiceMethod
-	50,  // 94: metadata_lifecycle.v1.DynamicWebServiceInput.body:type_name -> metadata_lifecycle.v1.RequestBodyInput
-	49,  // 95: metadata_lifecycle.v1.HTTPWebService.common:type_name -> metadata_lifecycle.v1.WebServiceCommon
-	68,  // 96: metadata_lifecycle.v1.HTTPWebService.parameters:type_name -> metadata_lifecycle.v1.Parameter
-	4,   // 97: metadata_lifecycle.v1.HTTPWebService.method:type_name -> metadata_lifecycle.v1.WebServiceMethod
-	51,  // 98: metadata_lifecycle.v1.HTTPWebService.body:type_name -> metadata_lifecycle.v1.RequestBody
-	45,  // 99: metadata_lifecycle.v1.HTTPWebService.native_formats:type_name -> metadata_lifecycle.v1.NativeFormat
-	49,  // 100: metadata_lifecycle.v1.DynamicWebService.common:type_name -> metadata_lifecycle.v1.WebServiceCommon
-	68,  // 101: metadata_lifecycle.v1.DynamicWebService.parameters:type_name -> metadata_lifecycle.v1.Parameter
-	4,   // 102: metadata_lifecycle.v1.DynamicWebService.method:type_name -> metadata_lifecycle.v1.WebServiceMethod
-	51,  // 103: metadata_lifecycle.v1.DynamicWebService.body:type_name -> metadata_lifecycle.v1.RequestBody
-	45,  // 104: metadata_lifecycle.v1.DynamicWebService.native_formats:type_name -> metadata_lifecycle.v1.NativeFormat
-	47,  // 105: metadata_lifecycle.v1.WFSWebServiceInput.common:type_name -> metadata_lifecycle.v1.WebServiceCommonInput
-	67,  // 106: metadata_lifecycle.v1.WFSWebServiceInput.parameters:type_name -> metadata_lifecycle.v1.ParameterInput
-	49,  // 107: metadata_lifecycle.v1.WFSWebService.common:type_name -> metadata_lifecycle.v1.WebServiceCommon
-	45,  // 108: metadata_lifecycle.v1.WFSWebService.native_formats:type_name -> metadata_lifecycle.v1.NativeFormat
-	68,  // 109: metadata_lifecycle.v1.WFSWebService.parameters:type_name -> metadata_lifecycle.v1.Parameter
-	47,  // 110: metadata_lifecycle.v1.WMSWebServiceInput.common:type_name -> metadata_lifecycle.v1.WebServiceCommonInput
-	61,  // 111: metadata_lifecycle.v1.WMSWebServiceInput.layers:type_name -> metadata_lifecycle.v1.WMSLayerInput
-	67,  // 112: metadata_lifecycle.v1.WMSWebServiceInput.get_map_parameters:type_name -> metadata_lifecycle.v1.ParameterInput
-	67,  // 113: metadata_lifecycle.v1.WMSWebServiceInput.get_feature_info_parameters:type_name -> metadata_lifecycle.v1.ParameterInput
-	49,  // 114: metadata_lifecycle.v1.WMSWebService.common:type_name -> metadata_lifecycle.v1.WebServiceCommon
-	60,  // 115: metadata_lifecycle.v1.WMSWebService.layers:type_name -> metadata_lifecycle.v1.WMSLayer
-	68,  // 116: metadata_lifecycle.v1.WMSWebService.get_map_parameters:type_name -> metadata_lifecycle.v1.Parameter
-	68,  // 117: metadata_lifecycle.v1.WMSWebService.get_feature_info_parameters:type_name -> metadata_lifecycle.v1.Parameter
-	47,  // 118: metadata_lifecycle.v1.WMTSWebServiceInput.common:type_name -> metadata_lifecycle.v1.WebServiceCommonInput
-	65,  // 119: metadata_lifecycle.v1.WMTSWebServiceInput.layers:type_name -> metadata_lifecycle.v1.WMTSLayerInput
-	67,  // 120: metadata_lifecycle.v1.WMTSWebServiceInput.get_tile_parameters:type_name -> metadata_lifecycle.v1.ParameterInput
-	67,  // 121: metadata_lifecycle.v1.WMTSWebServiceInput.get_feature_info_parameters:type_name -> metadata_lifecycle.v1.ParameterInput
-	49,  // 122: metadata_lifecycle.v1.WMTSWebService.common:type_name -> metadata_lifecycle.v1.WebServiceCommon
-	64,  // 123: metadata_lifecycle.v1.WMTSWebService.layers:type_name -> metadata_lifecycle.v1.WMTSLayer
-	68,  // 124: metadata_lifecycle.v1.WMTSWebService.get_tile_parameters:type_name -> metadata_lifecycle.v1.Parameter
-	68,  // 125: metadata_lifecycle.v1.WMTSWebService.get_feature_info_parameters:type_name -> metadata_lifecycle.v1.Parameter
-	74,  // 126: metadata_lifecycle.v1.ParameterInput.string:type_name -> metadata_lifecycle.v1.StringParameter
-	75,  // 127: metadata_lifecycle.v1.ParameterInput.boolean:type_name -> metadata_lifecycle.v1.BooleanParameter
-	76,  // 128: metadata_lifecycle.v1.ParameterInput.integer:type_name -> metadata_lifecycle.v1.IntegerParameter
-	77,  // 129: metadata_lifecycle.v1.ParameterInput.float:type_name -> metadata_lifecycle.v1.FloatParameter
-	78,  // 130: metadata_lifecycle.v1.ParameterInput.date_time:type_name -> metadata_lifecycle.v1.DateTimeParameter
-	80,  // 131: metadata_lifecycle.v1.ParameterInput.template:type_name -> metadata_lifecycle.v1.TemplateParameterInput
-	7,   // 132: metadata_lifecycle.v1.ParameterInput.location:type_name -> metadata_lifecycle.v1.WebServiceParameterLocation
-	8,   // 133: metadata_lifecycle.v1.ParameterInput.role:type_name -> metadata_lifecycle.v1.WebServiceParameterRole
-	74,  // 134: metadata_lifecycle.v1.Parameter.string:type_name -> metadata_lifecycle.v1.StringParameter
-	75,  // 135: metadata_lifecycle.v1.Parameter.boolean:type_name -> metadata_lifecycle.v1.BooleanParameter
-	76,  // 136: metadata_lifecycle.v1.Parameter.integer:type_name -> metadata_lifecycle.v1.IntegerParameter
-	77,  // 137: metadata_lifecycle.v1.Parameter.float:type_name -> metadata_lifecycle.v1.FloatParameter
-	78,  // 138: metadata_lifecycle.v1.Parameter.date_time:type_name -> metadata_lifecycle.v1.DateTimeParameter
-	79,  // 139: metadata_lifecycle.v1.Parameter.template:type_name -> metadata_lifecycle.v1.TemplateParameter
-	7,   // 140: metadata_lifecycle.v1.Parameter.location:type_name -> metadata_lifecycle.v1.WebServiceParameterLocation
-	8,   // 141: metadata_lifecycle.v1.Parameter.role:type_name -> metadata_lifecycle.v1.WebServiceParameterRole
-	81,  // 142: metadata_lifecycle.v1.ScalarParameterInput.string:type_name -> metadata_lifecycle.v1.ScalarStringParameter
-	82,  // 143: metadata_lifecycle.v1.ScalarParameterInput.boolean:type_name -> metadata_lifecycle.v1.ScalarBooleanParameter
-	83,  // 144: metadata_lifecycle.v1.ScalarParameterInput.integer:type_name -> metadata_lifecycle.v1.ScalarIntegerParameter
-	84,  // 145: metadata_lifecycle.v1.ScalarParameterInput.float:type_name -> metadata_lifecycle.v1.ScalarFloatParameter
-	85,  // 146: metadata_lifecycle.v1.ScalarParameterInput.date_time:type_name -> metadata_lifecycle.v1.ScalarDateTimeParameter
-	8,   // 147: metadata_lifecycle.v1.ScalarParameterInput.role:type_name -> metadata_lifecycle.v1.WebServiceParameterRole
-	81,  // 148: metadata_lifecycle.v1.ScalarParameter.string:type_name -> metadata_lifecycle.v1.ScalarStringParameter
-	82,  // 149: metadata_lifecycle.v1.ScalarParameter.boolean:type_name -> metadata_lifecycle.v1.ScalarBooleanParameter
-	83,  // 150: metadata_lifecycle.v1.ScalarParameter.integer:type_name -> metadata_lifecycle.v1.ScalarIntegerParameter
-	84,  // 151: metadata_lifecycle.v1.ScalarParameter.float:type_name -> metadata_lifecycle.v1.ScalarFloatParameter
-	85,  // 152: metadata_lifecycle.v1.ScalarParameter.date_time:type_name -> metadata_lifecycle.v1.ScalarDateTimeParameter
-	8,   // 153: metadata_lifecycle.v1.ScalarParameter.role:type_name -> metadata_lifecycle.v1.WebServiceParameterRole
-	71,  // 154: metadata_lifecycle.v1.StringParameter.enum:type_name -> metadata_lifecycle.v1.StringEnumOption
-	72,  // 155: metadata_lifecycle.v1.IntegerParameter.enum:type_name -> metadata_lifecycle.v1.IntegerEnumOption
-	73,  // 156: metadata_lifecycle.v1.FloatParameter.enum:type_name -> metadata_lifecycle.v1.FloatEnumOption
-	117, // 157: metadata_lifecycle.v1.DateTimeParameter.minimum:type_name -> google.protobuf.Timestamp
-	117, // 158: metadata_lifecycle.v1.DateTimeParameter.maximum:type_name -> google.protobuf.Timestamp
-	117, // 159: metadata_lifecycle.v1.DateTimeParameter.default:type_name -> google.protobuf.Timestamp
-	70,  // 160: metadata_lifecycle.v1.TemplateParameter.parameters:type_name -> metadata_lifecycle.v1.ScalarParameter
-	69,  // 161: metadata_lifecycle.v1.TemplateParameterInput.parameters:type_name -> metadata_lifecycle.v1.ScalarParameterInput
-	71,  // 162: metadata_lifecycle.v1.ScalarStringParameter.enum:type_name -> metadata_lifecycle.v1.StringEnumOption
-	72,  // 163: metadata_lifecycle.v1.ScalarIntegerParameter.enum:type_name -> metadata_lifecycle.v1.IntegerEnumOption
-	73,  // 164: metadata_lifecycle.v1.ScalarFloatParameter.enum:type_name -> metadata_lifecycle.v1.FloatEnumOption
-	117, // 165: metadata_lifecycle.v1.ScalarDateTimeParameter.minimum:type_name -> google.protobuf.Timestamp
-	117, // 166: metadata_lifecycle.v1.ScalarDateTimeParameter.maximum:type_name -> google.protobuf.Timestamp
-	117, // 167: metadata_lifecycle.v1.ScalarDateTimeParameter.default:type_name -> google.protobuf.Timestamp
-	39,  // 168: metadata_lifecycle.v1.SoftwareApplicationInput.identifiers:type_name -> metadata_lifecycle.v1.VersionedIdentifierInput
-	39,  // 169: metadata_lifecycle.v1.SoftwareSourceCodeInput.identifiers:type_name -> metadata_lifecycle.v1.VersionedIdentifierInput
-	114, // 170: metadata_lifecycle.v1.DiscardResourceDraftRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
-	114, // 171: metadata_lifecycle.v1.SubmitResourceRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
-	114, // 172: metadata_lifecycle.v1.WithdrawResourceRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
-	114, // 173: metadata_lifecycle.v1.ReopenResourceRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
-	114, // 174: metadata_lifecycle.v1.PublishResourceRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
-	114, // 175: metadata_lifecycle.v1.UnpublishResourceRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
-	37,  // 176: metadata_lifecycle.v1.SubmitResourceResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
-	115, // 177: metadata_lifecycle.v1.SubmitResourceResponse.notifications:type_name -> metadata_lifecycle.v1.Notification
-	37,  // 178: metadata_lifecycle.v1.WithdrawResourceResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
-	37,  // 179: metadata_lifecycle.v1.ReopenResourceResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
-	37,  // 180: metadata_lifecycle.v1.PublishResourceResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
-	115, // 181: metadata_lifecycle.v1.PublishResourceResponse.notifications:type_name -> metadata_lifecycle.v1.Notification
-	37,  // 182: metadata_lifecycle.v1.UnpublishResourceResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
-	115, // 183: metadata_lifecycle.v1.UnpublishResourceResponse.notifications:type_name -> metadata_lifecycle.v1.Notification
-	114, // 184: metadata_lifecycle.v1.RejectResourceRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
-	37,  // 185: metadata_lifecycle.v1.RejectResourceResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
-	115, // 186: metadata_lifecycle.v1.RejectResourceResponse.notifications:type_name -> metadata_lifecycle.v1.Notification
-	114, // 187: metadata_lifecycle.v1.DraftResourceFromPublicationRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
-	37,  // 188: metadata_lifecycle.v1.DraftResourceFromPublicationResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
-	111, // 189: metadata_lifecycle.v1.DraftResourceFromPublicationResponse.copied_distributions:type_name -> metadata_lifecycle.v1.DraftResourceFromPublicationResponse.CopiedDistributionsEntry
-	114, // 190: metadata_lifecycle.v1.DraftResourceFromLatestArchiveRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
-	37,  // 191: metadata_lifecycle.v1.DraftResourceFromLatestArchiveResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
-	112, // 192: metadata_lifecycle.v1.DraftResourceFromLatestArchiveResponse.copied_distributions:type_name -> metadata_lifecycle.v1.DraftResourceFromLatestArchiveResponse.CopiedDistributionsEntry
-	114, // 193: metadata_lifecycle.v1.CopyPublishedResourceRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
-	37,  // 194: metadata_lifecycle.v1.CopyPublishedResourceResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
-	113, // 195: metadata_lifecycle.v1.CopyPublishedResourceResponse.copied_distributions:type_name -> metadata_lifecycle.v1.CopyPublishedResourceResponse.CopiedDistributionsEntry
-	42,  // 196: metadata_lifecycle.v1.ReplaceResourceDraftRequest.dataset:type_name -> metadata_lifecycle.v1.DatasetInput
-	86,  // 197: metadata_lifecycle.v1.ReplaceResourceDraftRequest.software_application:type_name -> metadata_lifecycle.v1.SoftwareApplicationInput
-	87,  // 198: metadata_lifecycle.v1.ReplaceResourceDraftRequest.software_source_code:type_name -> metadata_lifecycle.v1.SoftwareSourceCodeInput
-	37,  // 199: metadata_lifecycle.v1.ReplaceResourceDraftResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
-	16,  // 200: metadata_lifecycle.v1.ResourceService.RequestDistributionConversion:input_type -> metadata_lifecycle.v1.RequestDistributionConversionRequest
-	9,   // 201: metadata_lifecycle.v1.ResourceService.CreateResource:input_type -> metadata_lifecycle.v1.CreateResourceRequest
-	11,  // 202: metadata_lifecycle.v1.ResourceService.GetResourceVersion:input_type -> metadata_lifecycle.v1.GetResourceVersionRequest
-	14,  // 203: metadata_lifecycle.v1.ResourceService.GetDistributionFormats:input_type -> metadata_lifecycle.v1.GetDistributionFormatsRequest
-	18,  // 204: metadata_lifecycle.v1.ResourceService.CheckDistributionRead:input_type -> metadata_lifecycle.v1.CheckDistributionReadRequest
-	13,  // 205: metadata_lifecycle.v1.ResourceService.PrepareDistributionDownload:input_type -> metadata_lifecycle.v1.PrepareDistributionDownloadRequest
-	24,  // 206: metadata_lifecycle.v1.ResourceService.PrepareDistributionAccess:input_type -> metadata_lifecycle.v1.PrepareDistributionAccessRequest
-	30,  // 207: metadata_lifecycle.v1.ResourceService.ListResourceVersions:input_type -> metadata_lifecycle.v1.ListResourceVersionsRequest
-	108, // 208: metadata_lifecycle.v1.ResourceService.ReplaceResourceDraft:input_type -> metadata_lifecycle.v1.ReplaceResourceDraftRequest
-	88,  // 209: metadata_lifecycle.v1.ResourceService.DiscardResourceDraft:input_type -> metadata_lifecycle.v1.DiscardResourceDraftRequest
-	89,  // 210: metadata_lifecycle.v1.ResourceService.SubmitResource:input_type -> metadata_lifecycle.v1.SubmitResourceRequest
-	90,  // 211: metadata_lifecycle.v1.ResourceService.WithdrawResource:input_type -> metadata_lifecycle.v1.WithdrawResourceRequest
-	100, // 212: metadata_lifecycle.v1.ResourceService.RejectResource:input_type -> metadata_lifecycle.v1.RejectResourceRequest
-	91,  // 213: metadata_lifecycle.v1.ResourceService.ReopenResource:input_type -> metadata_lifecycle.v1.ReopenResourceRequest
-	92,  // 214: metadata_lifecycle.v1.ResourceService.PublishResource:input_type -> metadata_lifecycle.v1.PublishResourceRequest
-	93,  // 215: metadata_lifecycle.v1.ResourceService.UnpublishResource:input_type -> metadata_lifecycle.v1.UnpublishResourceRequest
-	102, // 216: metadata_lifecycle.v1.ResourceService.DraftResourceFromPublication:input_type -> metadata_lifecycle.v1.DraftResourceFromPublicationRequest
-	104, // 217: metadata_lifecycle.v1.ResourceService.DraftResourceFromLatestArchive:input_type -> metadata_lifecycle.v1.DraftResourceFromLatestArchiveRequest
-	106, // 218: metadata_lifecycle.v1.ResourceService.CopyPublishedResource:input_type -> metadata_lifecycle.v1.CopyPublishedResourceRequest
-	17,  // 219: metadata_lifecycle.v1.ResourceService.RequestDistributionConversion:output_type -> metadata_lifecycle.v1.RequestDistributionConversionResponse
-	10,  // 220: metadata_lifecycle.v1.ResourceService.CreateResource:output_type -> metadata_lifecycle.v1.CreateResourceResponse
-	12,  // 221: metadata_lifecycle.v1.ResourceService.GetResourceVersion:output_type -> metadata_lifecycle.v1.GetResourceVersionResponse
-	15,  // 222: metadata_lifecycle.v1.ResourceService.GetDistributionFormats:output_type -> metadata_lifecycle.v1.GetDistributionFormatsResponse
-	19,  // 223: metadata_lifecycle.v1.ResourceService.CheckDistributionRead:output_type -> metadata_lifecycle.v1.CheckDistributionReadResponse
-	20,  // 224: metadata_lifecycle.v1.ResourceService.PrepareDistributionDownload:output_type -> metadata_lifecycle.v1.PrepareDistributionDownloadResponse
-	29,  // 225: metadata_lifecycle.v1.ResourceService.PrepareDistributionAccess:output_type -> metadata_lifecycle.v1.PrepareDistributionAccessResponse
-	32,  // 226: metadata_lifecycle.v1.ResourceService.ListResourceVersions:output_type -> metadata_lifecycle.v1.ListResourceVersionsResponse
-	109, // 227: metadata_lifecycle.v1.ResourceService.ReplaceResourceDraft:output_type -> metadata_lifecycle.v1.ReplaceResourceDraftResponse
-	99,  // 228: metadata_lifecycle.v1.ResourceService.DiscardResourceDraft:output_type -> metadata_lifecycle.v1.DiscardResourceDraftResponse
-	94,  // 229: metadata_lifecycle.v1.ResourceService.SubmitResource:output_type -> metadata_lifecycle.v1.SubmitResourceResponse
-	95,  // 230: metadata_lifecycle.v1.ResourceService.WithdrawResource:output_type -> metadata_lifecycle.v1.WithdrawResourceResponse
-	101, // 231: metadata_lifecycle.v1.ResourceService.RejectResource:output_type -> metadata_lifecycle.v1.RejectResourceResponse
-	96,  // 232: metadata_lifecycle.v1.ResourceService.ReopenResource:output_type -> metadata_lifecycle.v1.ReopenResourceResponse
-	97,  // 233: metadata_lifecycle.v1.ResourceService.PublishResource:output_type -> metadata_lifecycle.v1.PublishResourceResponse
-	98,  // 234: metadata_lifecycle.v1.ResourceService.UnpublishResource:output_type -> metadata_lifecycle.v1.UnpublishResourceResponse
-	103, // 235: metadata_lifecycle.v1.ResourceService.DraftResourceFromPublication:output_type -> metadata_lifecycle.v1.DraftResourceFromPublicationResponse
-	105, // 236: metadata_lifecycle.v1.ResourceService.DraftResourceFromLatestArchive:output_type -> metadata_lifecycle.v1.DraftResourceFromLatestArchiveResponse
-	107, // 237: metadata_lifecycle.v1.ResourceService.CopyPublishedResource:output_type -> metadata_lifecycle.v1.CopyPublishedResourceResponse
-	219, // [219:238] is the sub-list for method output_type
-	200, // [200:219] is the sub-list for method input_type
-	200, // [200:200] is the sub-list for extension type_name
-	200, // [200:200] is the sub-list for extension extendee
-	0,   // [0:200] is the sub-list for field type_name
+	117, // 19: metadata_lifecycle.v1.PrepareDistributionAccessResponse.headers:type_name -> metadata_lifecycle.v1.PrepareDistributionAccessResponse.HeadersEntry
+	118, // 20: metadata_lifecycle.v1.MonitoringRequest.headers:type_name -> metadata_lifecycle.v1.MonitoringRequest.HeadersEntry
+	32,  // 21: metadata_lifecycle.v1.MonitoringDistribution.request:type_name -> metadata_lifecycle.v1.MonitoringRequest
+	31,  // 22: metadata_lifecycle.v1.MonitoringDistribution.contact_points:type_name -> metadata_lifecycle.v1.MonitoringContactPoint
+	33,  // 23: metadata_lifecycle.v1.MonitoringGroup.distributions:type_name -> metadata_lifecycle.v1.MonitoringDistribution
+	34,  // 24: metadata_lifecycle.v1.MonitoringConcept.groups:type_name -> metadata_lifecycle.v1.MonitoringGroup
+	35,  // 25: metadata_lifecycle.v1.ListMonitoringDistributionsResponse.concepts:type_name -> metadata_lifecycle.v1.MonitoringConcept
+	122, // 26: metadata_lifecycle.v1.ListResourceVersionsRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
+	122, // 27: metadata_lifecycle.v1.ResourceVersionSummary.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
+	124, // 28: metadata_lifecycle.v1.ResourceVersionSummary.status:type_name -> metadata_lifecycle.v1.VersioningStatus
+	125, // 29: metadata_lifecycle.v1.ResourceVersionSummary.created_at:type_name -> google.protobuf.Timestamp
+	125, // 30: metadata_lifecycle.v1.ResourceVersionSummary.updated_at:type_name -> google.protobuf.Timestamp
+	125, // 31: metadata_lifecycle.v1.ResourceVersionSummary.submitted_at:type_name -> google.protobuf.Timestamp
+	125, // 32: metadata_lifecycle.v1.ResourceVersionSummary.published_at:type_name -> google.protobuf.Timestamp
+	125, // 33: metadata_lifecycle.v1.ResourceVersionSummary.archived_at:type_name -> google.protobuf.Timestamp
+	125, // 34: metadata_lifecycle.v1.ResourceVersionSummary.rejected_at:type_name -> google.protobuf.Timestamp
+	38,  // 35: metadata_lifecycle.v1.ListResourceVersionsResponse.versions:type_name -> metadata_lifecycle.v1.ResourceVersionSummary
+	124, // 36: metadata_lifecycle.v1.ResourceVersion.status:type_name -> metadata_lifecycle.v1.VersioningStatus
+	125, // 37: metadata_lifecycle.v1.ResourceVersion.created_at:type_name -> google.protobuf.Timestamp
+	125, // 38: metadata_lifecycle.v1.ResourceVersion.updated_at:type_name -> google.protobuf.Timestamp
+	41,  // 39: metadata_lifecycle.v1.ResourceVersion.dataset:type_name -> metadata_lifecycle.v1.DatasetResourceMetadata
+	42,  // 40: metadata_lifecycle.v1.ResourceVersion.software_application:type_name -> metadata_lifecycle.v1.SoftwareApplicationResourceMetadata
+	43,  // 41: metadata_lifecycle.v1.ResourceVersion.software_source_code:type_name -> metadata_lifecycle.v1.SoftwareSourceCodeResourceMetadata
+	125, // 42: metadata_lifecycle.v1.ResourceVersion.rejected_at:type_name -> google.protobuf.Timestamp
+	1,   // 43: metadata_lifecycle.v1.DatasetResourceMetadata.accrual_periodicity:type_name -> metadata_lifecycle.v1.DatasetAccrualPeriodicity
+	0,   // 44: metadata_lifecycle.v1.DatasetResourceMetadata.access_right:type_name -> metadata_lifecycle.v1.DatasetAccessRight
+	51,  // 45: metadata_lifecycle.v1.DatasetResourceMetadata.distributions:type_name -> metadata_lifecycle.v1.Distribution
+	47,  // 46: metadata_lifecycle.v1.DatasetResourceMetadata.temporal_coverage:type_name -> metadata_lifecycle.v1.Temporal
+	48,  // 47: metadata_lifecycle.v1.DatasetResourceMetadata.geological_temporal_coverage:type_name -> metadata_lifecycle.v1.GeologicalTemporalCoverage
+	45,  // 48: metadata_lifecycle.v1.DatasetResourceMetadata.persistent_identifiers:type_name -> metadata_lifecycle.v1.VersionedIdentifier
+	126, // 49: metadata_lifecycle.v1.DatasetResourceMetadata.providers:type_name -> metadata_lifecycle.v1.EntityReference
+	126, // 50: metadata_lifecycle.v1.DatasetResourceMetadata.categories:type_name -> metadata_lifecycle.v1.EntityReference
+	125, // 51: metadata_lifecycle.v1.DatasetResourceMetadata.created:type_name -> google.protobuf.Timestamp
+	125, // 52: metadata_lifecycle.v1.DatasetResourceMetadata.updated:type_name -> google.protobuf.Timestamp
+	2,   // 53: metadata_lifecycle.v1.DatasetResourceMetadata.type:type_name -> metadata_lifecycle.v1.DatasetType
+	126, // 54: metadata_lifecycle.v1.SoftwareApplicationResourceMetadata.creators:type_name -> metadata_lifecycle.v1.EntityReference
+	45,  // 55: metadata_lifecycle.v1.SoftwareApplicationResourceMetadata.identifiers:type_name -> metadata_lifecycle.v1.VersionedIdentifier
+	126, // 56: metadata_lifecycle.v1.SoftwareApplicationResourceMetadata.categories:type_name -> metadata_lifecycle.v1.EntityReference
+	126, // 57: metadata_lifecycle.v1.SoftwareSourceCodeResourceMetadata.creators:type_name -> metadata_lifecycle.v1.EntityReference
+	45,  // 58: metadata_lifecycle.v1.SoftwareSourceCodeResourceMetadata.identifiers:type_name -> metadata_lifecycle.v1.VersionedIdentifier
+	126, // 59: metadata_lifecycle.v1.SoftwareSourceCodeResourceMetadata.categories:type_name -> metadata_lifecycle.v1.EntityReference
+	124, // 60: metadata_lifecycle.v1.ResourceRecord.status:type_name -> metadata_lifecycle.v1.VersioningStatus
+	125, // 61: metadata_lifecycle.v1.Temporal.start:type_name -> google.protobuf.Timestamp
+	125, // 62: metadata_lifecycle.v1.Temporal.end:type_name -> google.protobuf.Timestamp
+	1,   // 63: metadata_lifecycle.v1.DatasetInput.accrual_periodicity:type_name -> metadata_lifecycle.v1.DatasetAccrualPeriodicity
+	0,   // 64: metadata_lifecycle.v1.DatasetInput.access_right:type_name -> metadata_lifecycle.v1.DatasetAccessRight
+	50,  // 65: metadata_lifecycle.v1.DatasetInput.distributions:type_name -> metadata_lifecycle.v1.DistributionInput
+	47,  // 66: metadata_lifecycle.v1.DatasetInput.temporal_coverage:type_name -> metadata_lifecycle.v1.Temporal
+	48,  // 67: metadata_lifecycle.v1.DatasetInput.geological_temporal_coverage:type_name -> metadata_lifecycle.v1.GeologicalTemporalCoverage
+	46,  // 68: metadata_lifecycle.v1.DatasetInput.persistent_identifiers:type_name -> metadata_lifecycle.v1.VersionedIdentifierInput
+	125, // 69: metadata_lifecycle.v1.DatasetInput.created:type_name -> google.protobuf.Timestamp
+	125, // 70: metadata_lifecycle.v1.DatasetInput.updated:type_name -> google.protobuf.Timestamp
+	2,   // 71: metadata_lifecycle.v1.DatasetInput.type:type_name -> metadata_lifecycle.v1.DatasetType
+	3,   // 72: metadata_lifecycle.v1.DistributionInput.type:type_name -> metadata_lifecycle.v1.DistributionType
+	53,  // 73: metadata_lifecycle.v1.DistributionInput.web_service:type_name -> metadata_lifecycle.v1.WebServiceInput
+	73,  // 74: metadata_lifecycle.v1.DistributionInput.downloadable_file:type_name -> metadata_lifecycle.v1.DownloadableFile
+	3,   // 75: metadata_lifecycle.v1.Distribution.type:type_name -> metadata_lifecycle.v1.DistributionType
+	55,  // 76: metadata_lifecycle.v1.Distribution.web_service:type_name -> metadata_lifecycle.v1.WebService
+	73,  // 77: metadata_lifecycle.v1.Distribution.downloadable_file:type_name -> metadata_lifecycle.v1.DownloadableFile
+	59,  // 78: metadata_lifecycle.v1.WebServiceInput.http:type_name -> metadata_lifecycle.v1.HTTPWebServiceInput
+	60,  // 79: metadata_lifecycle.v1.WebServiceInput.dynamic:type_name -> metadata_lifecycle.v1.DynamicWebServiceInput
+	63,  // 80: metadata_lifecycle.v1.WebServiceInput.wfs:type_name -> metadata_lifecycle.v1.WFSWebServiceInput
+	65,  // 81: metadata_lifecycle.v1.WebServiceInput.wms:type_name -> metadata_lifecycle.v1.WMSWebServiceInput
+	69,  // 82: metadata_lifecycle.v1.WebServiceInput.wmts:type_name -> metadata_lifecycle.v1.WMTSWebServiceInput
+	6,   // 83: metadata_lifecycle.v1.WebServiceCommonInput.visible_on:type_name -> metadata_lifecycle.v1.WebServiceVisibleOn
+	61,  // 84: metadata_lifecycle.v1.WebService.http:type_name -> metadata_lifecycle.v1.HTTPWebService
+	62,  // 85: metadata_lifecycle.v1.WebService.dynamic:type_name -> metadata_lifecycle.v1.DynamicWebService
+	64,  // 86: metadata_lifecycle.v1.WebService.wfs:type_name -> metadata_lifecycle.v1.WFSWebService
+	66,  // 87: metadata_lifecycle.v1.WebService.wms:type_name -> metadata_lifecycle.v1.WMSWebService
+	70,  // 88: metadata_lifecycle.v1.WebService.wmts:type_name -> metadata_lifecycle.v1.WMTSWebService
+	126, // 89: metadata_lifecycle.v1.WebServiceCommon.provider_reference:type_name -> metadata_lifecycle.v1.EntityReference
+	6,   // 90: metadata_lifecycle.v1.WebServiceCommon.visible_on:type_name -> metadata_lifecycle.v1.WebServiceVisibleOn
+	76,  // 91: metadata_lifecycle.v1.RequestBodyInput.parameters:type_name -> metadata_lifecycle.v1.ScalarParameterInput
+	77,  // 92: metadata_lifecycle.v1.RequestBody.parameters:type_name -> metadata_lifecycle.v1.ScalarParameter
+	54,  // 93: metadata_lifecycle.v1.HTTPWebServiceInput.common:type_name -> metadata_lifecycle.v1.WebServiceCommonInput
+	74,  // 94: metadata_lifecycle.v1.HTTPWebServiceInput.parameters:type_name -> metadata_lifecycle.v1.ParameterInput
+	4,   // 95: metadata_lifecycle.v1.HTTPWebServiceInput.method:type_name -> metadata_lifecycle.v1.WebServiceMethod
+	57,  // 96: metadata_lifecycle.v1.HTTPWebServiceInput.body:type_name -> metadata_lifecycle.v1.RequestBodyInput
+	54,  // 97: metadata_lifecycle.v1.DynamicWebServiceInput.common:type_name -> metadata_lifecycle.v1.WebServiceCommonInput
+	74,  // 98: metadata_lifecycle.v1.DynamicWebServiceInput.parameters:type_name -> metadata_lifecycle.v1.ParameterInput
+	4,   // 99: metadata_lifecycle.v1.DynamicWebServiceInput.method:type_name -> metadata_lifecycle.v1.WebServiceMethod
+	57,  // 100: metadata_lifecycle.v1.DynamicWebServiceInput.body:type_name -> metadata_lifecycle.v1.RequestBodyInput
+	56,  // 101: metadata_lifecycle.v1.HTTPWebService.common:type_name -> metadata_lifecycle.v1.WebServiceCommon
+	75,  // 102: metadata_lifecycle.v1.HTTPWebService.parameters:type_name -> metadata_lifecycle.v1.Parameter
+	4,   // 103: metadata_lifecycle.v1.HTTPWebService.method:type_name -> metadata_lifecycle.v1.WebServiceMethod
+	58,  // 104: metadata_lifecycle.v1.HTTPWebService.body:type_name -> metadata_lifecycle.v1.RequestBody
+	52,  // 105: metadata_lifecycle.v1.HTTPWebService.native_formats:type_name -> metadata_lifecycle.v1.NativeFormat
+	56,  // 106: metadata_lifecycle.v1.DynamicWebService.common:type_name -> metadata_lifecycle.v1.WebServiceCommon
+	75,  // 107: metadata_lifecycle.v1.DynamicWebService.parameters:type_name -> metadata_lifecycle.v1.Parameter
+	4,   // 108: metadata_lifecycle.v1.DynamicWebService.method:type_name -> metadata_lifecycle.v1.WebServiceMethod
+	58,  // 109: metadata_lifecycle.v1.DynamicWebService.body:type_name -> metadata_lifecycle.v1.RequestBody
+	52,  // 110: metadata_lifecycle.v1.DynamicWebService.native_formats:type_name -> metadata_lifecycle.v1.NativeFormat
+	54,  // 111: metadata_lifecycle.v1.WFSWebServiceInput.common:type_name -> metadata_lifecycle.v1.WebServiceCommonInput
+	74,  // 112: metadata_lifecycle.v1.WFSWebServiceInput.parameters:type_name -> metadata_lifecycle.v1.ParameterInput
+	56,  // 113: metadata_lifecycle.v1.WFSWebService.common:type_name -> metadata_lifecycle.v1.WebServiceCommon
+	52,  // 114: metadata_lifecycle.v1.WFSWebService.native_formats:type_name -> metadata_lifecycle.v1.NativeFormat
+	75,  // 115: metadata_lifecycle.v1.WFSWebService.parameters:type_name -> metadata_lifecycle.v1.Parameter
+	54,  // 116: metadata_lifecycle.v1.WMSWebServiceInput.common:type_name -> metadata_lifecycle.v1.WebServiceCommonInput
+	68,  // 117: metadata_lifecycle.v1.WMSWebServiceInput.layers:type_name -> metadata_lifecycle.v1.WMSLayerInput
+	74,  // 118: metadata_lifecycle.v1.WMSWebServiceInput.get_map_parameters:type_name -> metadata_lifecycle.v1.ParameterInput
+	74,  // 119: metadata_lifecycle.v1.WMSWebServiceInput.get_feature_info_parameters:type_name -> metadata_lifecycle.v1.ParameterInput
+	56,  // 120: metadata_lifecycle.v1.WMSWebService.common:type_name -> metadata_lifecycle.v1.WebServiceCommon
+	67,  // 121: metadata_lifecycle.v1.WMSWebService.layers:type_name -> metadata_lifecycle.v1.WMSLayer
+	75,  // 122: metadata_lifecycle.v1.WMSWebService.get_map_parameters:type_name -> metadata_lifecycle.v1.Parameter
+	75,  // 123: metadata_lifecycle.v1.WMSWebService.get_feature_info_parameters:type_name -> metadata_lifecycle.v1.Parameter
+	54,  // 124: metadata_lifecycle.v1.WMTSWebServiceInput.common:type_name -> metadata_lifecycle.v1.WebServiceCommonInput
+	72,  // 125: metadata_lifecycle.v1.WMTSWebServiceInput.layers:type_name -> metadata_lifecycle.v1.WMTSLayerInput
+	74,  // 126: metadata_lifecycle.v1.WMTSWebServiceInput.get_tile_parameters:type_name -> metadata_lifecycle.v1.ParameterInput
+	74,  // 127: metadata_lifecycle.v1.WMTSWebServiceInput.get_feature_info_parameters:type_name -> metadata_lifecycle.v1.ParameterInput
+	56,  // 128: metadata_lifecycle.v1.WMTSWebService.common:type_name -> metadata_lifecycle.v1.WebServiceCommon
+	71,  // 129: metadata_lifecycle.v1.WMTSWebService.layers:type_name -> metadata_lifecycle.v1.WMTSLayer
+	75,  // 130: metadata_lifecycle.v1.WMTSWebService.get_tile_parameters:type_name -> metadata_lifecycle.v1.Parameter
+	75,  // 131: metadata_lifecycle.v1.WMTSWebService.get_feature_info_parameters:type_name -> metadata_lifecycle.v1.Parameter
+	81,  // 132: metadata_lifecycle.v1.ParameterInput.string:type_name -> metadata_lifecycle.v1.StringParameter
+	82,  // 133: metadata_lifecycle.v1.ParameterInput.boolean:type_name -> metadata_lifecycle.v1.BooleanParameter
+	83,  // 134: metadata_lifecycle.v1.ParameterInput.integer:type_name -> metadata_lifecycle.v1.IntegerParameter
+	84,  // 135: metadata_lifecycle.v1.ParameterInput.float:type_name -> metadata_lifecycle.v1.FloatParameter
+	85,  // 136: metadata_lifecycle.v1.ParameterInput.date_time:type_name -> metadata_lifecycle.v1.DateTimeParameter
+	87,  // 137: metadata_lifecycle.v1.ParameterInput.template:type_name -> metadata_lifecycle.v1.TemplateParameterInput
+	7,   // 138: metadata_lifecycle.v1.ParameterInput.location:type_name -> metadata_lifecycle.v1.WebServiceParameterLocation
+	8,   // 139: metadata_lifecycle.v1.ParameterInput.role:type_name -> metadata_lifecycle.v1.WebServiceParameterRole
+	81,  // 140: metadata_lifecycle.v1.Parameter.string:type_name -> metadata_lifecycle.v1.StringParameter
+	82,  // 141: metadata_lifecycle.v1.Parameter.boolean:type_name -> metadata_lifecycle.v1.BooleanParameter
+	83,  // 142: metadata_lifecycle.v1.Parameter.integer:type_name -> metadata_lifecycle.v1.IntegerParameter
+	84,  // 143: metadata_lifecycle.v1.Parameter.float:type_name -> metadata_lifecycle.v1.FloatParameter
+	85,  // 144: metadata_lifecycle.v1.Parameter.date_time:type_name -> metadata_lifecycle.v1.DateTimeParameter
+	86,  // 145: metadata_lifecycle.v1.Parameter.template:type_name -> metadata_lifecycle.v1.TemplateParameter
+	7,   // 146: metadata_lifecycle.v1.Parameter.location:type_name -> metadata_lifecycle.v1.WebServiceParameterLocation
+	8,   // 147: metadata_lifecycle.v1.Parameter.role:type_name -> metadata_lifecycle.v1.WebServiceParameterRole
+	88,  // 148: metadata_lifecycle.v1.ScalarParameterInput.string:type_name -> metadata_lifecycle.v1.ScalarStringParameter
+	89,  // 149: metadata_lifecycle.v1.ScalarParameterInput.boolean:type_name -> metadata_lifecycle.v1.ScalarBooleanParameter
+	90,  // 150: metadata_lifecycle.v1.ScalarParameterInput.integer:type_name -> metadata_lifecycle.v1.ScalarIntegerParameter
+	91,  // 151: metadata_lifecycle.v1.ScalarParameterInput.float:type_name -> metadata_lifecycle.v1.ScalarFloatParameter
+	92,  // 152: metadata_lifecycle.v1.ScalarParameterInput.date_time:type_name -> metadata_lifecycle.v1.ScalarDateTimeParameter
+	8,   // 153: metadata_lifecycle.v1.ScalarParameterInput.role:type_name -> metadata_lifecycle.v1.WebServiceParameterRole
+	88,  // 154: metadata_lifecycle.v1.ScalarParameter.string:type_name -> metadata_lifecycle.v1.ScalarStringParameter
+	89,  // 155: metadata_lifecycle.v1.ScalarParameter.boolean:type_name -> metadata_lifecycle.v1.ScalarBooleanParameter
+	90,  // 156: metadata_lifecycle.v1.ScalarParameter.integer:type_name -> metadata_lifecycle.v1.ScalarIntegerParameter
+	91,  // 157: metadata_lifecycle.v1.ScalarParameter.float:type_name -> metadata_lifecycle.v1.ScalarFloatParameter
+	92,  // 158: metadata_lifecycle.v1.ScalarParameter.date_time:type_name -> metadata_lifecycle.v1.ScalarDateTimeParameter
+	8,   // 159: metadata_lifecycle.v1.ScalarParameter.role:type_name -> metadata_lifecycle.v1.WebServiceParameterRole
+	78,  // 160: metadata_lifecycle.v1.StringParameter.enum:type_name -> metadata_lifecycle.v1.StringEnumOption
+	79,  // 161: metadata_lifecycle.v1.IntegerParameter.enum:type_name -> metadata_lifecycle.v1.IntegerEnumOption
+	80,  // 162: metadata_lifecycle.v1.FloatParameter.enum:type_name -> metadata_lifecycle.v1.FloatEnumOption
+	125, // 163: metadata_lifecycle.v1.DateTimeParameter.minimum:type_name -> google.protobuf.Timestamp
+	125, // 164: metadata_lifecycle.v1.DateTimeParameter.maximum:type_name -> google.protobuf.Timestamp
+	125, // 165: metadata_lifecycle.v1.DateTimeParameter.default:type_name -> google.protobuf.Timestamp
+	77,  // 166: metadata_lifecycle.v1.TemplateParameter.parameters:type_name -> metadata_lifecycle.v1.ScalarParameter
+	76,  // 167: metadata_lifecycle.v1.TemplateParameterInput.parameters:type_name -> metadata_lifecycle.v1.ScalarParameterInput
+	78,  // 168: metadata_lifecycle.v1.ScalarStringParameter.enum:type_name -> metadata_lifecycle.v1.StringEnumOption
+	79,  // 169: metadata_lifecycle.v1.ScalarIntegerParameter.enum:type_name -> metadata_lifecycle.v1.IntegerEnumOption
+	80,  // 170: metadata_lifecycle.v1.ScalarFloatParameter.enum:type_name -> metadata_lifecycle.v1.FloatEnumOption
+	125, // 171: metadata_lifecycle.v1.ScalarDateTimeParameter.minimum:type_name -> google.protobuf.Timestamp
+	125, // 172: metadata_lifecycle.v1.ScalarDateTimeParameter.maximum:type_name -> google.protobuf.Timestamp
+	125, // 173: metadata_lifecycle.v1.ScalarDateTimeParameter.default:type_name -> google.protobuf.Timestamp
+	46,  // 174: metadata_lifecycle.v1.SoftwareApplicationInput.identifiers:type_name -> metadata_lifecycle.v1.VersionedIdentifierInput
+	46,  // 175: metadata_lifecycle.v1.SoftwareSourceCodeInput.identifiers:type_name -> metadata_lifecycle.v1.VersionedIdentifierInput
+	122, // 176: metadata_lifecycle.v1.DiscardResourceDraftRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
+	122, // 177: metadata_lifecycle.v1.SubmitResourceRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
+	122, // 178: metadata_lifecycle.v1.WithdrawResourceRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
+	122, // 179: metadata_lifecycle.v1.ReopenResourceRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
+	122, // 180: metadata_lifecycle.v1.PublishResourceRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
+	122, // 181: metadata_lifecycle.v1.UnpublishResourceRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
+	44,  // 182: metadata_lifecycle.v1.SubmitResourceResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
+	123, // 183: metadata_lifecycle.v1.SubmitResourceResponse.notifications:type_name -> metadata_lifecycle.v1.Notification
+	44,  // 184: metadata_lifecycle.v1.WithdrawResourceResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
+	44,  // 185: metadata_lifecycle.v1.ReopenResourceResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
+	44,  // 186: metadata_lifecycle.v1.PublishResourceResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
+	123, // 187: metadata_lifecycle.v1.PublishResourceResponse.notifications:type_name -> metadata_lifecycle.v1.Notification
+	44,  // 188: metadata_lifecycle.v1.UnpublishResourceResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
+	123, // 189: metadata_lifecycle.v1.UnpublishResourceResponse.notifications:type_name -> metadata_lifecycle.v1.Notification
+	122, // 190: metadata_lifecycle.v1.RejectResourceRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
+	44,  // 191: metadata_lifecycle.v1.RejectResourceResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
+	123, // 192: metadata_lifecycle.v1.RejectResourceResponse.notifications:type_name -> metadata_lifecycle.v1.Notification
+	122, // 193: metadata_lifecycle.v1.DraftResourceFromPublicationRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
+	44,  // 194: metadata_lifecycle.v1.DraftResourceFromPublicationResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
+	119, // 195: metadata_lifecycle.v1.DraftResourceFromPublicationResponse.copied_distributions:type_name -> metadata_lifecycle.v1.DraftResourceFromPublicationResponse.CopiedDistributionsEntry
+	122, // 196: metadata_lifecycle.v1.DraftResourceFromLatestArchiveRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
+	44,  // 197: metadata_lifecycle.v1.DraftResourceFromLatestArchiveResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
+	120, // 198: metadata_lifecycle.v1.DraftResourceFromLatestArchiveResponse.copied_distributions:type_name -> metadata_lifecycle.v1.DraftResourceFromLatestArchiveResponse.CopiedDistributionsEntry
+	122, // 199: metadata_lifecycle.v1.CopyPublishedResourceRequest.resource_type:type_name -> metadata_lifecycle.v1.ResourceType
+	44,  // 200: metadata_lifecycle.v1.CopyPublishedResourceResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
+	121, // 201: metadata_lifecycle.v1.CopyPublishedResourceResponse.copied_distributions:type_name -> metadata_lifecycle.v1.CopyPublishedResourceResponse.CopiedDistributionsEntry
+	49,  // 202: metadata_lifecycle.v1.ReplaceResourceDraftRequest.dataset:type_name -> metadata_lifecycle.v1.DatasetInput
+	93,  // 203: metadata_lifecycle.v1.ReplaceResourceDraftRequest.software_application:type_name -> metadata_lifecycle.v1.SoftwareApplicationInput
+	94,  // 204: metadata_lifecycle.v1.ReplaceResourceDraftRequest.software_source_code:type_name -> metadata_lifecycle.v1.SoftwareSourceCodeInput
+	44,  // 205: metadata_lifecycle.v1.ReplaceResourceDraftResponse.resource:type_name -> metadata_lifecycle.v1.ResourceRecord
+	30,  // 206: metadata_lifecycle.v1.ResourceService.ListMonitoringDistributions:input_type -> metadata_lifecycle.v1.ListMonitoringDistributionsRequest
+	16,  // 207: metadata_lifecycle.v1.ResourceService.RequestDistributionConversion:input_type -> metadata_lifecycle.v1.RequestDistributionConversionRequest
+	9,   // 208: metadata_lifecycle.v1.ResourceService.CreateResource:input_type -> metadata_lifecycle.v1.CreateResourceRequest
+	11,  // 209: metadata_lifecycle.v1.ResourceService.GetResourceVersion:input_type -> metadata_lifecycle.v1.GetResourceVersionRequest
+	14,  // 210: metadata_lifecycle.v1.ResourceService.GetDistributionFormats:input_type -> metadata_lifecycle.v1.GetDistributionFormatsRequest
+	18,  // 211: metadata_lifecycle.v1.ResourceService.CheckDistributionRead:input_type -> metadata_lifecycle.v1.CheckDistributionReadRequest
+	13,  // 212: metadata_lifecycle.v1.ResourceService.PrepareDistributionDownload:input_type -> metadata_lifecycle.v1.PrepareDistributionDownloadRequest
+	24,  // 213: metadata_lifecycle.v1.ResourceService.PrepareDistributionAccess:input_type -> metadata_lifecycle.v1.PrepareDistributionAccessRequest
+	37,  // 214: metadata_lifecycle.v1.ResourceService.ListResourceVersions:input_type -> metadata_lifecycle.v1.ListResourceVersionsRequest
+	115, // 215: metadata_lifecycle.v1.ResourceService.ReplaceResourceDraft:input_type -> metadata_lifecycle.v1.ReplaceResourceDraftRequest
+	95,  // 216: metadata_lifecycle.v1.ResourceService.DiscardResourceDraft:input_type -> metadata_lifecycle.v1.DiscardResourceDraftRequest
+	96,  // 217: metadata_lifecycle.v1.ResourceService.SubmitResource:input_type -> metadata_lifecycle.v1.SubmitResourceRequest
+	97,  // 218: metadata_lifecycle.v1.ResourceService.WithdrawResource:input_type -> metadata_lifecycle.v1.WithdrawResourceRequest
+	107, // 219: metadata_lifecycle.v1.ResourceService.RejectResource:input_type -> metadata_lifecycle.v1.RejectResourceRequest
+	98,  // 220: metadata_lifecycle.v1.ResourceService.ReopenResource:input_type -> metadata_lifecycle.v1.ReopenResourceRequest
+	99,  // 221: metadata_lifecycle.v1.ResourceService.PublishResource:input_type -> metadata_lifecycle.v1.PublishResourceRequest
+	100, // 222: metadata_lifecycle.v1.ResourceService.UnpublishResource:input_type -> metadata_lifecycle.v1.UnpublishResourceRequest
+	109, // 223: metadata_lifecycle.v1.ResourceService.DraftResourceFromPublication:input_type -> metadata_lifecycle.v1.DraftResourceFromPublicationRequest
+	111, // 224: metadata_lifecycle.v1.ResourceService.DraftResourceFromLatestArchive:input_type -> metadata_lifecycle.v1.DraftResourceFromLatestArchiveRequest
+	113, // 225: metadata_lifecycle.v1.ResourceService.CopyPublishedResource:input_type -> metadata_lifecycle.v1.CopyPublishedResourceRequest
+	36,  // 226: metadata_lifecycle.v1.ResourceService.ListMonitoringDistributions:output_type -> metadata_lifecycle.v1.ListMonitoringDistributionsResponse
+	17,  // 227: metadata_lifecycle.v1.ResourceService.RequestDistributionConversion:output_type -> metadata_lifecycle.v1.RequestDistributionConversionResponse
+	10,  // 228: metadata_lifecycle.v1.ResourceService.CreateResource:output_type -> metadata_lifecycle.v1.CreateResourceResponse
+	12,  // 229: metadata_lifecycle.v1.ResourceService.GetResourceVersion:output_type -> metadata_lifecycle.v1.GetResourceVersionResponse
+	15,  // 230: metadata_lifecycle.v1.ResourceService.GetDistributionFormats:output_type -> metadata_lifecycle.v1.GetDistributionFormatsResponse
+	19,  // 231: metadata_lifecycle.v1.ResourceService.CheckDistributionRead:output_type -> metadata_lifecycle.v1.CheckDistributionReadResponse
+	20,  // 232: metadata_lifecycle.v1.ResourceService.PrepareDistributionDownload:output_type -> metadata_lifecycle.v1.PrepareDistributionDownloadResponse
+	29,  // 233: metadata_lifecycle.v1.ResourceService.PrepareDistributionAccess:output_type -> metadata_lifecycle.v1.PrepareDistributionAccessResponse
+	39,  // 234: metadata_lifecycle.v1.ResourceService.ListResourceVersions:output_type -> metadata_lifecycle.v1.ListResourceVersionsResponse
+	116, // 235: metadata_lifecycle.v1.ResourceService.ReplaceResourceDraft:output_type -> metadata_lifecycle.v1.ReplaceResourceDraftResponse
+	106, // 236: metadata_lifecycle.v1.ResourceService.DiscardResourceDraft:output_type -> metadata_lifecycle.v1.DiscardResourceDraftResponse
+	101, // 237: metadata_lifecycle.v1.ResourceService.SubmitResource:output_type -> metadata_lifecycle.v1.SubmitResourceResponse
+	102, // 238: metadata_lifecycle.v1.ResourceService.WithdrawResource:output_type -> metadata_lifecycle.v1.WithdrawResourceResponse
+	108, // 239: metadata_lifecycle.v1.ResourceService.RejectResource:output_type -> metadata_lifecycle.v1.RejectResourceResponse
+	103, // 240: metadata_lifecycle.v1.ResourceService.ReopenResource:output_type -> metadata_lifecycle.v1.ReopenResourceResponse
+	104, // 241: metadata_lifecycle.v1.ResourceService.PublishResource:output_type -> metadata_lifecycle.v1.PublishResourceResponse
+	105, // 242: metadata_lifecycle.v1.ResourceService.UnpublishResource:output_type -> metadata_lifecycle.v1.UnpublishResourceResponse
+	110, // 243: metadata_lifecycle.v1.ResourceService.DraftResourceFromPublication:output_type -> metadata_lifecycle.v1.DraftResourceFromPublicationResponse
+	112, // 244: metadata_lifecycle.v1.ResourceService.DraftResourceFromLatestArchive:output_type -> metadata_lifecycle.v1.DraftResourceFromLatestArchiveResponse
+	114, // 245: metadata_lifecycle.v1.ResourceService.CopyPublishedResource:output_type -> metadata_lifecycle.v1.CopyPublishedResourceResponse
+	226, // [226:246] is the sub-list for method output_type
+	206, // [206:226] is the sub-list for method input_type
+	206, // [206:206] is the sub-list for extension type_name
+	206, // [206:206] is the sub-list for extension extendee
+	0,   // [0:206] is the sub-list for field type_name
 }
 
 func init() { file_metadata_lifecycle_v1_resource_proto_init() }
@@ -10439,55 +10884,56 @@ func file_metadata_lifecycle_v1_resource_proto_init() {
 	}
 	file_metadata_lifecycle_v1_resource_proto_msgTypes[17].OneofWrappers = []any{}
 	file_metadata_lifecycle_v1_resource_proto_msgTypes[20].OneofWrappers = []any{}
-	file_metadata_lifecycle_v1_resource_proto_msgTypes[22].OneofWrappers = []any{}
-	file_metadata_lifecycle_v1_resource_proto_msgTypes[24].OneofWrappers = []any{
+	file_metadata_lifecycle_v1_resource_proto_msgTypes[23].OneofWrappers = []any{}
+	file_metadata_lifecycle_v1_resource_proto_msgTypes[29].OneofWrappers = []any{}
+	file_metadata_lifecycle_v1_resource_proto_msgTypes[31].OneofWrappers = []any{
 		(*ResourceVersion_Dataset)(nil),
 		(*ResourceVersion_SoftwareApplication)(nil),
 		(*ResourceVersion_SoftwareSourceCode)(nil),
 	}
-	file_metadata_lifecycle_v1_resource_proto_msgTypes[25].OneofWrappers = []any{
+	file_metadata_lifecycle_v1_resource_proto_msgTypes[32].OneofWrappers = []any{
 		(*DatasetResourceMetadata_TemporalCoverage)(nil),
 		(*DatasetResourceMetadata_GeologicalTemporalCoverage)(nil),
 	}
-	file_metadata_lifecycle_v1_resource_proto_msgTypes[26].OneofWrappers = []any{}
-	file_metadata_lifecycle_v1_resource_proto_msgTypes[27].OneofWrappers = []any{}
-	file_metadata_lifecycle_v1_resource_proto_msgTypes[30].OneofWrappers = []any{}
-	file_metadata_lifecycle_v1_resource_proto_msgTypes[32].OneofWrappers = []any{}
-	file_metadata_lifecycle_v1_resource_proto_msgTypes[33].OneofWrappers = []any{
+	file_metadata_lifecycle_v1_resource_proto_msgTypes[33].OneofWrappers = []any{}
+	file_metadata_lifecycle_v1_resource_proto_msgTypes[34].OneofWrappers = []any{}
+	file_metadata_lifecycle_v1_resource_proto_msgTypes[37].OneofWrappers = []any{}
+	file_metadata_lifecycle_v1_resource_proto_msgTypes[39].OneofWrappers = []any{}
+	file_metadata_lifecycle_v1_resource_proto_msgTypes[40].OneofWrappers = []any{
 		(*DatasetInput_TemporalCoverage)(nil),
 		(*DatasetInput_GeologicalTemporalCoverage)(nil),
 	}
-	file_metadata_lifecycle_v1_resource_proto_msgTypes[34].OneofWrappers = []any{
+	file_metadata_lifecycle_v1_resource_proto_msgTypes[41].OneofWrappers = []any{
 		(*DistributionInput_WebService)(nil),
 		(*DistributionInput_DownloadableFile)(nil),
 	}
-	file_metadata_lifecycle_v1_resource_proto_msgTypes[35].OneofWrappers = []any{
+	file_metadata_lifecycle_v1_resource_proto_msgTypes[42].OneofWrappers = []any{
 		(*Distribution_WebService)(nil),
 		(*Distribution_DownloadableFile)(nil),
 	}
-	file_metadata_lifecycle_v1_resource_proto_msgTypes[37].OneofWrappers = []any{
+	file_metadata_lifecycle_v1_resource_proto_msgTypes[44].OneofWrappers = []any{
 		(*WebServiceInput_Http)(nil),
 		(*WebServiceInput_Dynamic)(nil),
 		(*WebServiceInput_Wfs)(nil),
 		(*WebServiceInput_Wms)(nil),
 		(*WebServiceInput_Wmts)(nil),
 	}
-	file_metadata_lifecycle_v1_resource_proto_msgTypes[38].OneofWrappers = []any{}
-	file_metadata_lifecycle_v1_resource_proto_msgTypes[39].OneofWrappers = []any{
+	file_metadata_lifecycle_v1_resource_proto_msgTypes[45].OneofWrappers = []any{}
+	file_metadata_lifecycle_v1_resource_proto_msgTypes[46].OneofWrappers = []any{
 		(*WebService_Http)(nil),
 		(*WebService_Dynamic)(nil),
 		(*WebService_Wfs)(nil),
 		(*WebService_Wms)(nil),
 		(*WebService_Wmts)(nil),
 	}
-	file_metadata_lifecycle_v1_resource_proto_msgTypes[40].OneofWrappers = []any{}
-	file_metadata_lifecycle_v1_resource_proto_msgTypes[41].OneofWrappers = []any{}
 	file_metadata_lifecycle_v1_resource_proto_msgTypes[47].OneofWrappers = []any{}
 	file_metadata_lifecycle_v1_resource_proto_msgTypes[48].OneofWrappers = []any{}
-	file_metadata_lifecycle_v1_resource_proto_msgTypes[52].OneofWrappers = []any{}
+	file_metadata_lifecycle_v1_resource_proto_msgTypes[54].OneofWrappers = []any{}
 	file_metadata_lifecycle_v1_resource_proto_msgTypes[55].OneofWrappers = []any{}
-	file_metadata_lifecycle_v1_resource_proto_msgTypes[56].OneofWrappers = []any{}
-	file_metadata_lifecycle_v1_resource_proto_msgTypes[58].OneofWrappers = []any{
+	file_metadata_lifecycle_v1_resource_proto_msgTypes[59].OneofWrappers = []any{}
+	file_metadata_lifecycle_v1_resource_proto_msgTypes[62].OneofWrappers = []any{}
+	file_metadata_lifecycle_v1_resource_proto_msgTypes[63].OneofWrappers = []any{}
+	file_metadata_lifecycle_v1_resource_proto_msgTypes[65].OneofWrappers = []any{
 		(*ParameterInput_String_)(nil),
 		(*ParameterInput_Boolean)(nil),
 		(*ParameterInput_Integer)(nil),
@@ -10495,7 +10941,7 @@ func file_metadata_lifecycle_v1_resource_proto_init() {
 		(*ParameterInput_DateTime)(nil),
 		(*ParameterInput_Template)(nil),
 	}
-	file_metadata_lifecycle_v1_resource_proto_msgTypes[59].OneofWrappers = []any{
+	file_metadata_lifecycle_v1_resource_proto_msgTypes[66].OneofWrappers = []any{
 		(*Parameter_String_)(nil),
 		(*Parameter_Boolean)(nil),
 		(*Parameter_Integer)(nil),
@@ -10503,36 +10949,36 @@ func file_metadata_lifecycle_v1_resource_proto_init() {
 		(*Parameter_DateTime)(nil),
 		(*Parameter_Template)(nil),
 	}
-	file_metadata_lifecycle_v1_resource_proto_msgTypes[60].OneofWrappers = []any{
+	file_metadata_lifecycle_v1_resource_proto_msgTypes[67].OneofWrappers = []any{
 		(*ScalarParameterInput_String_)(nil),
 		(*ScalarParameterInput_Boolean)(nil),
 		(*ScalarParameterInput_Integer)(nil),
 		(*ScalarParameterInput_Float)(nil),
 		(*ScalarParameterInput_DateTime)(nil),
 	}
-	file_metadata_lifecycle_v1_resource_proto_msgTypes[61].OneofWrappers = []any{
+	file_metadata_lifecycle_v1_resource_proto_msgTypes[68].OneofWrappers = []any{
 		(*ScalarParameter_String_)(nil),
 		(*ScalarParameter_Boolean)(nil),
 		(*ScalarParameter_Integer)(nil),
 		(*ScalarParameter_Float)(nil),
 		(*ScalarParameter_DateTime)(nil),
 	}
-	file_metadata_lifecycle_v1_resource_proto_msgTypes[62].OneofWrappers = []any{}
-	file_metadata_lifecycle_v1_resource_proto_msgTypes[63].OneofWrappers = []any{}
-	file_metadata_lifecycle_v1_resource_proto_msgTypes[64].OneofWrappers = []any{}
-	file_metadata_lifecycle_v1_resource_proto_msgTypes[65].OneofWrappers = []any{}
-	file_metadata_lifecycle_v1_resource_proto_msgTypes[66].OneofWrappers = []any{}
-	file_metadata_lifecycle_v1_resource_proto_msgTypes[67].OneofWrappers = []any{}
-	file_metadata_lifecycle_v1_resource_proto_msgTypes[68].OneofWrappers = []any{}
 	file_metadata_lifecycle_v1_resource_proto_msgTypes[69].OneofWrappers = []any{}
+	file_metadata_lifecycle_v1_resource_proto_msgTypes[70].OneofWrappers = []any{}
+	file_metadata_lifecycle_v1_resource_proto_msgTypes[71].OneofWrappers = []any{}
 	file_metadata_lifecycle_v1_resource_proto_msgTypes[72].OneofWrappers = []any{}
 	file_metadata_lifecycle_v1_resource_proto_msgTypes[73].OneofWrappers = []any{}
 	file_metadata_lifecycle_v1_resource_proto_msgTypes[74].OneofWrappers = []any{}
 	file_metadata_lifecycle_v1_resource_proto_msgTypes[75].OneofWrappers = []any{}
 	file_metadata_lifecycle_v1_resource_proto_msgTypes[76].OneofWrappers = []any{}
-	file_metadata_lifecycle_v1_resource_proto_msgTypes[77].OneofWrappers = []any{}
-	file_metadata_lifecycle_v1_resource_proto_msgTypes[78].OneofWrappers = []any{}
-	file_metadata_lifecycle_v1_resource_proto_msgTypes[99].OneofWrappers = []any{
+	file_metadata_lifecycle_v1_resource_proto_msgTypes[79].OneofWrappers = []any{}
+	file_metadata_lifecycle_v1_resource_proto_msgTypes[80].OneofWrappers = []any{}
+	file_metadata_lifecycle_v1_resource_proto_msgTypes[81].OneofWrappers = []any{}
+	file_metadata_lifecycle_v1_resource_proto_msgTypes[82].OneofWrappers = []any{}
+	file_metadata_lifecycle_v1_resource_proto_msgTypes[83].OneofWrappers = []any{}
+	file_metadata_lifecycle_v1_resource_proto_msgTypes[84].OneofWrappers = []any{}
+	file_metadata_lifecycle_v1_resource_proto_msgTypes[85].OneofWrappers = []any{}
+	file_metadata_lifecycle_v1_resource_proto_msgTypes[106].OneofWrappers = []any{
 		(*ReplaceResourceDraftRequest_Dataset)(nil),
 		(*ReplaceResourceDraftRequest_SoftwareApplication)(nil),
 		(*ReplaceResourceDraftRequest_SoftwareSourceCode)(nil),
@@ -10543,7 +10989,7 @@ func file_metadata_lifecycle_v1_resource_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_metadata_lifecycle_v1_resource_proto_rawDesc), len(file_metadata_lifecycle_v1_resource_proto_rawDesc)),
 			NumEnums:      9,
-			NumMessages:   105,
+			NumMessages:   113,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

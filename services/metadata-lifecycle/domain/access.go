@@ -109,7 +109,8 @@ func ParseGlobalPermission(value string) (GlobalPermission, error) {
 		GlobalPermissionResourceUnpublish,
 		GlobalPermissionCategoryManage,
 		GlobalPermissionConfigurationManage,
-		GlobalPermissionConverterManage:
+		GlobalPermissionConverterManage,
+		GlobalPermissionMonitoringRead:
 		return permission, nil
 	default:
 		return "", apperror.Default(apperror.CodeInternal)

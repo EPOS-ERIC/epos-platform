@@ -110,7 +110,7 @@ func Open(ctx context.Context, log *slog.Logger, cfg config.Config) (*PostgresDB
 		ContactPoints:        contactpointdb.New(db),
 		ContactRequests:      contactrequestdb.New(db),
 		Discovery:            discoverydb.New(log, db),
-		Datasets:             datasetdb.New(db),
+		Datasets:             datasetdb.New(log, db),
 		Imports:              importdb.New(db),
 		SoftwareApplications: softwareapplicationsdb.New(db),
 		SoftwareSourceCodes:  softwaresourcecodesdb.New(db),

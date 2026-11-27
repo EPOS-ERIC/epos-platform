@@ -209,6 +209,61 @@ export type ConversionRelation = {
   updated_by: string;
 };
 
+export type MonitoringConcept = {
+  concept: string;
+  /**
+   * @format uuid
+   */
+  concept_id: string;
+  groups: MonitoringGroup[];
+};
+
+export type MonitoringGroup = {
+  /**
+   * @format uuid
+   */
+  id: string;
+  name: string;
+  distributions: MonitoringDistribution[];
+};
+
+export type MonitoringDistribution = {
+  /**
+   * @format uuid
+   */
+  resource_id: string;
+  /**
+   * @format uuid
+   */
+  version_id: string;
+  name: string;
+  request: MonitoringRequest;
+  contact_points: MonitoringContactPoint[];
+};
+
+export type MonitoringContactPoint = {
+  /**
+   * @format uuid
+   */
+  id: string;
+  /**
+   * @format email
+   */
+  email: string;
+};
+
+export type MonitoringRequest = {
+  method: "GET" | "POST" | "PUT" | "DELETE";
+  /**
+   * @format uri
+   */
+  url: string;
+  headers: {
+    [key: string]: string;
+  } | null;
+  body: string | null;
+};
+
 export type PreparedDistributionRequest = {
   method: "GET" | "POST" | "PUT" | "DELETE";
   /**
@@ -346,7 +401,8 @@ export type GlobalPermission =
   | "global.resource.unpublish"
   | "global.category.manage"
   | "global.configuration.manage"
-  | "global.converter.manage";
+  | "global.converter.manage"
+  | "global.monitoring.read";
 
 /**
  * Group-scoped permission key.
@@ -685,6 +741,11 @@ export type DownloadableFileDistributionDraft = {
   downloadable_file: DownloadableFile;
 };
 
+/**
+ * Every service configuration must produce a default request without caller-supplied values.
+ * Required scalar parameters, including template children and body parameters, must have defaults.
+ * Active templates must render with those defaults.
+ */
 export type WebServiceDraft =
   | (Omit<WmsWebServiceDraft, "type"> & {
       type: "WMS";
@@ -727,7 +788,7 @@ export type HttpWebServiceDraft = WebServiceDraftCommon &
   GenericWebServiceConfigurationDraft;
 
 /**
- * HTTP configuration with exactly one LONGITUDE and one LATITUDE FLOAT parameter across top-level parameters, template children, and body_parameters. Coordinate parameters must be required, editable, single-value, have no default or enum, and must not use explode. Optional minimum and maximum bounds are supported.
+ * HTTP configuration with exactly one LONGITUDE and one LATITUDE FLOAT parameter across top-level parameters, template children, and body_parameters. Coordinate parameters must be required, editable, single-value, have a default, have no enum, and must not use explode. Optional minimum and maximum bounds are supported.
  */
 export type DynamicWebServiceDraft = WebServiceDraftCommon &
   DynamicWebServiceConfigurationDraft;
@@ -753,7 +814,7 @@ export type GenericWebServiceConfigurationDraft =
   };
 
 /**
- * HTTP configuration with exactly one LONGITUDE and one LATITUDE FLOAT parameter across top-level parameters, template children, and body_parameters. Coordinate parameters must be required, editable, single-value, have no default or enum, and must not use explode. Optional minimum and maximum bounds are supported.
+ * HTTP configuration with exactly one LONGITUDE and one LATITUDE FLOAT parameter across top-level parameters, template children, and body_parameters. Coordinate parameters must be required, editable, single-value, have a default, have no enum, and must not use explode. Optional minimum and maximum bounds are supported.
  */
 export type DynamicWebServiceConfigurationDraft =
   SharedWebServiceConfigurationDraft & {

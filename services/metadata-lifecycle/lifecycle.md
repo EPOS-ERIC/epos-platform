@@ -76,6 +76,10 @@ Published resource lists return current `PUBLISHED` versions grouped by logical 
 
 Software application and software source code are independent resource types. Their versions contain type-specific metadata plus creator, identifier, contact-point, and category links; they do not reference each other, distributions, or web services.
 
+### Web-service defaults
+
+Every web-service configuration must produce an executable default request without caller-supplied values. Required scalar parameters, including template children and body parameters, must have defaults; active templates must render using those defaults. Dynamic services also require defaults for longitude and latitude. Callers may supply values when accessing a service, subject to its parameter constraints.
+
 ## Metadata Ownership
 
 | Entity                           | Editor use                                     | Editor create/propose | Management                                          | Reference behavior                                                                                                                                        |
@@ -214,10 +218,13 @@ Users may hold both `EDITOR` and `REVIEWER` in same group. Active membership its
 | `group.category.manage`        | Group  | Manage canonical categories in owning group.                                                                                                        |
 | `global.category.manage`       | Global | Manage canonical categories in any group without membership.                                                                                        |
 | `global.configuration.manage`  | Global | Manage official configurations and every user's personal configurations in the Sharing service. See [Sharing authorization](../sharing/sharing.md). |
+| `global.monitoring.read`       | Global | Read published distribution monitoring targets.                                                                                                     |
 
 An active user with `global.permission.manage` grants and revokes globally scoped permissions. An active member with a `group.*` permission performs that action only in their group. A user with the corresponding `global.*` permission performs that action in every group without membership. Group role managers may assign or remove `EDITOR` and `REVIEWER` only; a user with `global.role.manage` may also assign or remove `GROUP_ADMIN`. Removing a role does not revoke membership; `GROUP_ADMIN` membership revocation requires `global.membership.manage`. Group permission managers grant and revoke group-scoped granted permissions in their group. `GROUP_ADMIN` includes all three group management permissions. Users with `global.organization.manage`, `global.contact_point.manage`, `global.group.manage`, `global.concept.manage`, or `global.category.manage` manage corresponding canonical entities globally. A user with `group.category.manage` manages canonical categories only in the group where permission is granted. Global `ADMIN` assignment, user blocking, and non-public read/discovery retain explicit `AuthorizeAdmin` behavior for now; future permission-specific replacements are listed below.
 
 `global.configuration.manage` is the permission for Sharing administration. It is granted to global `ADMIN` through `role_permissions` and may also be granted directly by a user with `global.permission.manage`. Its Sharing authorization flow is specified in [sharing.md](../sharing/sharing.md).
+
+`global.monitoring.read` allows reading published distribution monitoring targets. It is granted to global `ADMIN` through `role_permissions` and may also be granted directly by a user with `global.permission.manage`.
 
 Groups and categories are publicly readable without authentication. Public group metadata never includes memberships, roles, granted permissions, or role requests. A user with `global.membership.manage`, `global.role.manage`, `global.permission.manage`, or `global.notification.manage` may list users and read any user detail; users may also read their own detail. Group membership roster access requires a global membership/role management permission or an active membership with `group.membership.manage`, `group.role.manage`, or `group.permission.manage` in that group. Roster entries expose member ID, given name, family name, email, membership status, assigned roles, granted group permissions, role-derived group permissions, and pending role requests. A user may read the same assigned roles, granted group permissions, and role-derived group permissions for their own memberships.
 

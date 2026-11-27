@@ -152,6 +152,9 @@ class WMSMetadataContractTest(DistributionContractTestCase):
             for label, parameters in (
                 ("wrong location", [parameter("custom", location="HEADER")]),
                 ("missing default", [parameter("custom", required=True)]),
+                ("unrenderable default", [parameter(
+                    "custom", "TEMPLATE", template="{{eq .value 1}}", parameters=[child(default="text")],
+                )]),
                 (
                     "duplicate names",
                     [parameter("custom"), parameter("custom", position=1)],

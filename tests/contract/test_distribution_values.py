@@ -112,10 +112,9 @@ class DistributionValuesContractTest(DistributionContractTestCase):
                         target="parameters[0].value",
                     )
 
-    def test_defaults_overrides_and_missing_required_values(self) -> None:
-        """Verify scalar default limits, typed array defaults, overrides and required values."""
+    def test_defaults_and_overrides(self) -> None:
+        """Verify scalar default limits, typed array defaults and overrides."""
         detail = self.create_draft([web_distribution([
-            parameter("required", required=True),
             parameter("defaulted", position=1, required=True, default=["default"]),
             parameter("optional", position=2),
             parameter("multiple", position=3, multiple_values=True, explode=True, default=["one", "three"],
@@ -129,16 +128,15 @@ class DistributionValuesContractTest(DistributionContractTestCase):
         ])])
         distribution = detail["metadata"]["distributions"][0]
         identifiers = {item["name"]: item["id"] for item in distribution["web_service"]["parameters"]}
-        self.assert_prepare_problem(self.prepare_response(distribution), target="parameters")
-        prepared = self.prepare(distribution, values={identifiers["required"]: "supplied"})
+        prepared = self.prepare(distribution)
         query = parse_qs(urlsplit(prepared["url"]).query)
         self.assertEqual(query, {
-            "required": ["supplied"], "defaulted": ["default"],
+            "defaulted": ["default"],
             "multiple": ["one", "three"], "joined": ["one,three"],
             "integer_multiple": ["1", "3"], "float_joined": ["0.5,2.5"],
         })
         prepared = self.prepare(distribution, values={
-            identifiers["required"]: "supplied", identifiers["defaulted"]: "override",
+            identifiers["defaulted"]: "override",
             identifiers["multiple"]: ["two", "three"],
         })
         query = parse_qs(urlsplit(prepared["url"]).query)

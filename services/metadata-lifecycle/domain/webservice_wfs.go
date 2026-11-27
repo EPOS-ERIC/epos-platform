@@ -91,7 +91,7 @@ func (value *WFSWebServiceInput) Normalize() error {
 		return err
 	}
 	value.Parameters = parameters
-	return nil
+	return validateTemplateDefaults("parameters", parameters, nil)
 }
 
 func validateWFSParameters(templateURL string, parameters []WebServiceParameterInput) error {
@@ -181,6 +181,9 @@ func (w *WFSWebService) Normalize() (err error) {
 		return err
 	}
 	if err := validateWFSParameters(w.GetFeatureTemplateURL, parameters); err != nil {
+		return err
+	}
+	if err := validateTemplateDefaults("parameters", parameters, nil); err != nil {
 		return err
 	}
 	w.Parameters, err = applyNormalizedWebServiceParameters(w.Parameters, parameters)

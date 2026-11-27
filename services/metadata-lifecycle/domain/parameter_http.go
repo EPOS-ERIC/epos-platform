@@ -36,3 +36,27 @@ func (value *WebServiceParameterInput) Normalize() error {
 	}
 	return nil
 }
+
+func (value WebServiceParameterInput) validateHeaderDefault() error {
+	if value.Location != ParameterLocationHeader {
+		return nil
+	}
+
+	defaultValue := value.Schema.DefaultValue()
+	if defaultValue == nil {
+		return nil
+	}
+
+	items, err := resolveAccessValue(value.Schema, defaultValue)
+	if err != nil {
+		return apperror.Field("default", "Default must match parameter type and constraints.", err)
+	}
+
+	for _, item := range items {
+		if !httpguts.ValidHeaderFieldValue(item.Text()) {
+			return apperror.Field("default", "Default must be a valid HTTP header value.", nil)
+		}
+	}
+
+	return nil
+}
