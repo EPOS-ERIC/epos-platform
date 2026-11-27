@@ -142,9 +142,9 @@ describe('Test info popup', () => {
     cy.getByDataCy('details-dialog-service-value').then(($values) => {
       cy.getByDataCy('details-dialog-service-key').then(($keys) => {
 
-        expect($values).to.have.length(3);
+        expect($values).to.have.length(4);
         expect([...$keys].map(key => key.textContent.trim())).to.deep.equal([
-          'Service Provider', 'Service Endpoint', 'Service Documentation',
+          'Service Provider', 'Service Endpoint', 'Service Documentation', 'Service Type',
         ]);
         // Check if the values are populated correctly
         $values.each((i, value) => {
@@ -160,6 +160,9 @@ describe('Test info popup', () => {
               break;
             case 'Service Documentation':
               expect(val).to.eq('https://gnss-epos.eu/ics-tcs/');
+              break;
+            case 'Service Type':
+              expect(val).to.eq('HTTP');
               break;
             default:
               throw new Error('Unknown key: ' + key);

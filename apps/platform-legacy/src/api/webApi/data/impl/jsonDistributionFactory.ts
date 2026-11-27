@@ -228,8 +228,6 @@ export class JSONDistributionFactory {
     const webServiceTemporalCoverage = webService == null ? null
       : ObjectAccessUtility.getObjectValue<Record<string, unknown>>(webService, 'temporal_coverage', false);
     const temporalCoverage = ObjectAccessUtility.getObjectValue<Record<string, unknown>>(metadata, 'temporal_coverage', false);
-    const documentation = webService == null ? null
-      : ObjectAccessUtility.getObjectValue<Record<string, unknown>>(webService, 'documentation', false);
     const provider = webService == null ? null
       : ObjectAccessUtility.getObjectValue<Record<string, unknown>>(webService, 'provider', false);
     const visibleOn = webService == null ? [] : ObjectAccessUtility.getObjectArray<string>(webService, 'visible_on', false) ?? [];
@@ -270,7 +268,7 @@ export class JSONDistributionFactory {
       serviceName: webService == null ? '' : ObjectAccessUtility.getObjectValueString(webService, 'name', false, ''),
       serviceDescription: webService == null ? '' : ObjectAccessUtility.getObjectValueString(webService, 'description', false, ''),
       serviceParameters,
-      serviceDocumentation: documentation == null ? '' : ObjectAccessUtility.getObjectValueString(documentation, 'uri', false, ''),
+      serviceDocumentation: webService == null ? '' : ObjectAccessUtility.getObjectValueString(webService, 'documentation_uri', false, ''),
       serviceProvider: provider == null ? null : {
         dataProviderLegalName: ObjectAccessUtility.getObjectValueString(provider, 'name', false, ''),
         dataProviderUrl: '',
