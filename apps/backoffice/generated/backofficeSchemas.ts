@@ -209,6 +209,65 @@ export type ConversionRelation = {
   updated_by: string;
 };
 
+export type MonitoringConcept = {
+  concept: string;
+  /**
+   * @format uuid
+   */
+  concept_id: string;
+  groups: MonitoringGroup[];
+};
+
+export type MonitoringGroup = {
+  /**
+   * @format uuid
+   */
+  id: string;
+  name: string;
+  distributions: MonitoringDistribution[];
+};
+
+export type MonitoringDistribution = {
+  /**
+   * @format uuid
+   */
+  distribution_id: string;
+  /**
+   * @format uuid
+   */
+  resource_id: string;
+  /**
+   * @format uuid
+   */
+  version_id: string;
+  name: string;
+  request: MonitoringRequest;
+  contact_points: MonitoringContactPoint[];
+};
+
+export type MonitoringContactPoint = {
+  /**
+   * @format uuid
+   */
+  id: string;
+  /**
+   * @format email
+   */
+  email: string;
+};
+
+export type MonitoringRequest = {
+  method: "GET" | "POST" | "PUT" | "DELETE";
+  /**
+   * @format uri
+   */
+  url: string;
+  headers: {
+    [key: string]: string;
+  } | null;
+  body: string | null;
+};
+
 export type PreparedDistributionRequest = {
   method: "GET" | "POST" | "PUT" | "DELETE";
   /**
@@ -346,7 +405,8 @@ export type GlobalPermission =
   | "global.resource.unpublish"
   | "global.category.manage"
   | "global.configuration.manage"
-  | "global.converter.manage";
+  | "global.converter.manage"
+  | "global.monitoring.read";
 
 /**
  * Group-scoped permission key.

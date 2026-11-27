@@ -12,6 +12,7 @@ import (
 )
 
 type Store interface {
+	MonitoringDistributions(context.Context) ([]domain.MonitoringDistribution, error)
 	Get(context.Context, uuid.UUID, uuid.UUID) (domain.DatasetVersion, error)
 	GetDistributionDatasetVersion(context.Context, uuid.UUID) (uuid.UUID, uuid.UUID, error)
 	List(context.Context, uuid.UUID) ([]domain.ResourceVersionSummary, error)

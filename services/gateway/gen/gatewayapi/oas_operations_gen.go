@@ -60,6 +60,7 @@ const (
 	ListGroupCategoriesOperation                 OperationName = "ListGroupCategories"
 	ListGroupMembershipsOperation                OperationName = "ListGroupMemberships"
 	ListGroupsOperation                          OperationName = "ListGroups"
+	ListMonitoringDistributionsOperation         OperationName = "ListMonitoringDistributions"
 	ListNotificationTopicsOperation              OperationName = "ListNotificationTopics"
 	ListOfficialConfigurationsOperation          OperationName = "ListOfficialConfigurations"
 	ListOrganizationsOperation                   OperationName = "ListOrganizations"

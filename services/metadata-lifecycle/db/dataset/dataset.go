@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/apperror"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/dbtx"
@@ -18,13 +19,18 @@ import (
 
 // Repo persists each lifecycle operation in one database transaction.
 type Repo struct {
-	db *pgxpool.Pool
-	q  *sqlc.Queries
+	db  *pgxpool.Pool
+	q   *sqlc.Queries
+	log *slog.Logger
 }
 
 // New creates a dataset repository.
-func New(pool *pgxpool.Pool) *Repo {
-	return &Repo{db: pool, q: sqlc.New(pool)}
+func New(log *slog.Logger, pool *pgxpool.Pool) *Repo {
+	return &Repo{
+		db:  pool,
+		q:   sqlc.New(pool),
+		log: log,
+	}
 }
 
 func (r *Repo) CreateDraft(ctx context.Context, actorID string, groupID uuid.UUID, value domain.DatasetInput) (domain.DatasetVersion, error) {

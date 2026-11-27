@@ -37,6 +37,8 @@ tags:
     description: Read resource versions and manage their draft-to-publication lifecycle.
   - name: Access
     description: Access distribution data through the platform.
+  - name: Monitoring
+    description: Read published distribution monitoring targets.
   - name: Users
     description: Read user profiles and administer global access.
   - name: Authorization
@@ -63,6 +65,23 @@ tags:
     description: Manage conversion plugins and their distribution relations.
 
 paths:
+  /monitoring/distributions:
+    get:
+      tags: [Monitoring]
+      summary: List published distribution monitoring targets
+      description: Requires global.monitoring.read. Returns default provider requests without executing them. Distributions that cannot be prepared are omitted.
+      operationId: listMonitoringDistributions
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Published distributions grouped by concept and group.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/MonitoringConcept" }
+        default:
+          $ref: "#/components/responses/GatewayError"
   /capabilities:
     get:
       tags: [Capabilities]
@@ -3016,6 +3035,59 @@ components:
         output_format: { type: string, description: Output MIME type. }
         created_by: { type: string, description: Immutable creator user ID. }
         updated_by: { type: string, description: Last administrator to change the record. }
+    MonitoringConcept:
+      type: object
+      additionalProperties: false
+      required: [concept, concept_id, groups]
+      properties:
+        concept: { type: string }
+        concept_id: { type: string, format: uuid }
+        groups:
+          type: array
+          items: { $ref: "#/components/schemas/MonitoringGroup" }
+    MonitoringGroup:
+      type: object
+      additionalProperties: false
+      required: [id, name, distributions]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        distributions:
+          type: array
+          items: { $ref: "#/components/schemas/MonitoringDistribution" }
+    MonitoringDistribution:
+      type: object
+      additionalProperties: false
+      required: [distribution_id, resource_id, version_id, name, request, contact_points]
+      properties:
+        distribution_id: { type: string, format: uuid }
+        resource_id: { type: string, format: uuid }
+        version_id: { type: string, format: uuid }
+        name: { type: string }
+        request: { $ref: "#/components/schemas/MonitoringRequest" }
+        contact_points:
+          type: array
+          items: { $ref: "#/components/schemas/MonitoringContactPoint" }
+    MonitoringContactPoint:
+      type: object
+      additionalProperties: false
+      required: [id, email]
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+    MonitoringRequest:
+      type: object
+      additionalProperties: false
+      required: [method, url, headers, body]
+      properties:
+        method: { type: string, enum: [GET, POST, PUT, DELETE] }
+        url: { type: string, format: uri }
+        headers:
+          type: object
+          nullable: true
+          additionalProperties: { type: string }
+        body: { type: string, nullable: true }
+
     PreparedDistributionRequest:
       type: object
       additionalProperties: false
@@ -3174,6 +3246,7 @@ components:
         - global.category.manage
         - global.configuration.manage
         - global.converter.manage
+        - global.monitoring.read
 
     GroupPermission:
       type: string

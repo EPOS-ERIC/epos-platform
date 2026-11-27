@@ -10,6 +10,17 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
+func (c *MetadataLifecycle) ListMonitoringDistributions(ctx context.Context, actorID string) (*metadatalifecyclev1.ListMonitoringDistributionsResponse, error) {
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+
+	response, err := c.resources.ListMonitoringDistributions(ctx, &metadatalifecyclev1.ListMonitoringDistributionsRequest{})
+	if err != nil {
+		return nil, c.wrapError(ctx, "list monitoring distributions", err)
+	}
+
+	return response, nil
+}
+
 func (c *MetadataLifecycle) CreateResourceDraft(ctx context.Context, actorID string, request *metadatalifecyclev1.CreateResourceRequest) (*metadatalifecyclev1.CreateResourceResponse, error) {
 	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
 	response, err := c.resources.CreateResource(ctx, request)
