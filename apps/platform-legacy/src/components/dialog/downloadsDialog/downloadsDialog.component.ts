@@ -10,6 +10,7 @@ import { HttpClient } from '@angular/common/http';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort, Sort } from '@angular/material/sort';
 import { DistributionFormat } from 'api/webApi/data/distributionFormat.interface';
+import { SimpleDistributionFormat } from 'api/webApi/data/impl/simpleDistributionFormat';
 import { DistributionDetails } from 'api/webApi/data/distributionDetails.interface';
 import { ParameterValue } from 'api/webApi/data/parameterValue.interface';
 import { ParameterProperty } from 'api/webApi/data/parameterProperty.enum';
@@ -47,6 +48,7 @@ interface FormatElement {
   url: string;
   type: string;
   origin: PopupProperty | null;
+  distributionFormat?: DistributionFormat;
 }
 
 /**
@@ -137,10 +139,24 @@ export class DownloadsDialogComponent implements OnInit, AfterViewInit, AfterCon
 
     // 2. Populate the table (Logic differs for Software vs Standard)
     this.getServiceTableData();
+    const wms = this.distributionDetails.getFormats().find(format => format.resourceAccess?.type === 'WMS');
+    if (wms != null) {
+      try {
+        const response = await firstValueFrom(this.http.get(wms.resourceAccess!.capabilitiesUrl!, { responseType: 'text' }));
+        const xml = jQuery(jQuery.parseXML(response));
+        const formats = [...new Set(xml.find('Capability > Request > GetMap > Format').map((_, element) => jQuery(element).text()).get())];
+        formats.filter(format => format.startsWith('image/')).forEach(format => this.dataSource.data.push({
+          name: 'raw service response', format, originalFormat: format,
+          position: this.dataSource.data.length, url: '', type: 'ORIGINAL', origin: null, distributionFormat: wms,
+        }));
+      } catch (error) {
+        console.error('Unable to load WMS download formats:', error);
+        this.notifier.sendErrorNotification('Unable to retrieve the image formats supported by the WMS provider.');
+      }
+    }
 
-    if (this.hasFeatureTable) {
-
-      const distributionFormat = this.getDistributionFormat();
+    const distributionFormat = this.getDistributionFormat();
+    if (this.hasFeatureTable && distributionFormat != null && distributionFormat.getType() !== 'SERVICE') {
 
       void this.executionService.executeDistributionFormat(
         this.dataConfigurable.getDistributionDetails(),
@@ -244,7 +260,7 @@ export class DownloadsDialogComponent implements OnInit, AfterViewInit, AfterCon
     if (this.isElemFeature(elem) && elem.origin !== null) {
       this.downloadFeature(event, elem.origin);
     } else {
-      this.downloadService(elem.format);
+      this.downloadService(elem);
       this.tracker.trackEvent(TrackerCategory.DISTRIBUTION, TrackerAction.DOWNLOAD, this.formatTrackerDistributionName(this.distributionDetails) + Tracker.TARCKER_DATA_SEPARATION + elem.name + Tracker.TARCKER_DATA_SEPARATION + elem.format);
     }
   }
@@ -258,7 +274,7 @@ export class DownloadsDialogComponent implements OnInit, AfterViewInit, AfterCon
     if (this.isElemFeature(elem)) {
       this.copyUrlFeature(elem.url);
     } else {
-      this.copyUrlService(elem.format);
+      this.copyUrlService(elem);
       this.tracker.trackEvent(TrackerCategory.DISTRIBUTION, TrackerAction.COPY_URL, this.formatTrackerDistributionName(this.distributionDetails) + Tracker.TARCKER_DATA_SEPARATION + elem.name + Tracker.TARCKER_DATA_SEPARATION + elem.originalFormat);
 
     }
@@ -373,7 +389,7 @@ export class DownloadsDialogComponent implements OnInit, AfterViewInit, AfterCon
 
     this.selection.selected.forEach(elem => {
 
-      if (elem.type !== 'CONVERTED') {
+      if (elem.type !== 'CONVERTED' && elem.distributionFormat?.getType() !== 'SERVICE') {
 
         // Update parameter only for standard web services
         if (paramOutput !== undefined && !this.isSoftware) {
@@ -388,8 +404,16 @@ export class DownloadsDialogComponent implements OnInit, AfterViewInit, AfterCon
 
     });
 
+    if (promiseArray.length === 0) {
+      this.spinner = false;
+      return;
+    }
     void Promise.all(promiseArray).then(results => {
       this.downloadFile(results, this.serviceName.replace(/\s/g, ''));
+      this.spinner = false;
+    }).catch(error => {
+      console.error('Unable to prepare the selected provider URLs:', error);
+      this.notifier.sendErrorNotification('Unable to prepare the selected provider URLs.');
       this.spinner = false;
     });
 
@@ -506,7 +530,18 @@ export class DownloadsDialogComponent implements OnInit, AfterViewInit, AfterCon
    * It copies the URL of the current page to the clipboard
    * @param {string} format - The format of the output.
    */
-  private copyUrlService(format: string): void | string {
+  private copyUrlService(elem: FormatElement): void | string {
+    const format = elem.format;
+    if (elem.distributionFormat?.resourceAccess != null) {
+      if (elem.distributionFormat.getType() !== 'ORIGINAL') {
+        return;
+      }
+      void this.getCsvElement(elem).then(result => this.copyUrlFeature(result.url)).catch(error => {
+        console.error('Unable to prepare provider URL:', error);
+        this.notifier.sendErrorNotification('Unable to prepare the selected provider URL.');
+      });
+      return;
+    }
 
     // SOFTWARE LOGIC: Copy direct URL
     if (this.isSoftware) {
@@ -565,9 +600,9 @@ export class DownloadsDialogComponent implements OnInit, AfterViewInit, AfterCon
    * The function downloads the data from the distribution if the format is available, otherwise it
    * downloads the data from the originator URL
    */
-  private downloadService(format: string): void {
-
-    const distributionFormat = this.distributionFormat.find(e => e.getFormat() === format
+  private downloadService(elem: FormatElement): void {
+    const format = elem.format;
+    const distributionFormat = elem.distributionFormat ?? this.distributionFormat.find(e => e.getFormat() === format
       || (e.resourceAccess?.type === 'WMS' && e.getOriginalFormat() === format));
 
     if (distributionFormat?.resourceAccess?.type === 'WMS') {
@@ -632,14 +667,16 @@ export class DownloadsDialogComponent implements OnInit, AfterViewInit, AfterCon
     const response = await firstValueFrom(this.http.get(capabilitiesUrl.toString(), { responseType: 'text' }));
     const xml = jQuery(jQuery.parseXML(response));
     const version = xml.find('WMS_Capabilities, WMT_MS_Capabilities').attr('version');
-    const parameters = new Map((this.parameterValues ?? []).map(param => [param.name.toLowerCase(), param.value]));
+    const parameters = new Map<string, string>();
     const layerName = parameters.get('layers') ?? access.defaultLayer;
     const layer = xml.find('Layer').filter((_, element) => jQuery(element).children('Name').text() === layerName).first();
     if (!version || layer.length === 0 || xml.find('Capability > Request > GetMap > Format').filter((_, element) => jQuery(element).text() === format).length === 0) {
       throw new Error('The requested WMS layer or image format is unavailable.');
     }
     const onlineResource = xml.find('Capability > Request > GetMap > DCPType > HTTP > Get > OnlineResource').first();
-    const url = new URL(onlineResource.attr('xlink:href') ?? onlineResource.attr('href') ?? capabilitiesUrl.toString(), capabilitiesUrl);
+    const providerUrl = new URL(onlineResource.attr('xlink:href') ?? onlineResource.attr('href') ?? capabilitiesUrl.toString(), capabilitiesUrl);
+    const url = new URL(SimpleDistributionFormat.withParameters(providerUrl.toString(),
+      SimpleDistributionFormat.getOperationParameters(distributionFormat, this.parameterValues ?? [], 'tile')));
     capabilitiesUrl.searchParams.forEach((value, key) => {
       if (!Array.from(url.searchParams.keys()).some(existing => existing.toLowerCase() === key.toLowerCase())) {
         url.searchParams.append(key, value);
@@ -707,6 +744,13 @@ export class DownloadsDialogComponent implements OnInit, AfterViewInit, AfterCon
    * It returns a promise that resolves to a `FormatElement` object
    */
   private getCsvElement(elem: FormatElement): Promise<FormatElement> {
+    if (elem.distributionFormat?.resourceAccess != null) {
+      if (elem.distributionFormat.getType() !== 'ORIGINAL') {
+        return Promise.reject(new Error('The selected service response has no preparable provider URL.'));
+      }
+      return this.executionService.getOriginatorUrl(this.distributionDetails, this.dataConfigurable.getParameterDefinitions(),
+        this.parameterValues, elem.distributionFormat).then(url => ({ ...elem, url: url ?? '' }));
+    }
     const promise: Promise<FormatElement> = new Promise((resolve) => {
 
       if (this.isElemFeature(elem)) {
@@ -760,6 +804,15 @@ export class DownloadsDialogComponent implements OnInit, AfterViewInit, AfterCon
 
     if (this.distributionFormat.length > 0) {
       this.distributionFormat.map((e, index) => {
+
+        if (e.resourceAccess != null) {
+          this.dataSource.data.push({
+            name: e.getType() === 'CONVERTED' ? `converted response (${e.getLabel()})` : 'raw service response',
+            format: e.getType() === 'CONVERTED' ? e.getFormat() : e.getOriginalFormat(),
+            originalFormat: e.getOriginalFormat(), position: index, url: '', type: e.getType(), origin: null, distributionFormat: e,
+          });
+          return;
+        }
 
         // For software, extract the direct download URL
         const url = this.isSoftware ? (e.getUrl() || '') : '';

@@ -64,6 +64,9 @@ export class DevExecutionApi implements ExecutionApi {
     format: DistributionFormat,
     params: null | Array<ParameterValue>,
   ): string {
+    if (format.resourceAccess?.type === 'WMS' || format.resourceAccess?.type === 'WMTS') {
+      return format.resourceAccess.capabilitiesUrl!;
+    }
     let url = format.getUrl();
 
     url += (url.indexOf('?') < 0) ? '?' : '';
@@ -75,11 +78,14 @@ export class DevExecutionApi implements ExecutionApi {
     return url;
   }
 
-  public getOriginatorUrl(distribution: DistributionSummary, params: null | Array<ParameterValue>): Promise<string> {
-    const format = distribution.getFormats().find(item => item.resourceAccess != null && item.getType() === 'ORIGINAL');
-    if (format != null) {
+  public getOriginatorUrl(distribution: DistributionSummary, params: null | Array<ParameterValue>, selectedFormat?: DistributionFormat): Promise<string> {
+    const format = selectedFormat ?? distribution.getFormats().find(item => item.resourceAccess != null && (item.getType() === 'ORIGINAL' || item.getType() === 'SERVICE'));
+    if (format?.resourceAccess != null) {
       if (format.resourceAccess?.type === 'WMS' || format.resourceAccess?.type === 'WMTS') {
         return Promise.resolve(format.resourceAccess.capabilitiesUrl!);
+      }
+      if (format.getType() === 'CONVERTED') {
+        return Promise.reject(new Error('Converted formats do not support provider URL preparation.'));
       }
       return this.rest.post(format.getUrl().replace('/access?', '/prepare?'), this.resourceRequest(format, params))
         .then((response: { url: string }) => response.url);
@@ -113,7 +119,7 @@ export class DevExecutionApi implements ExecutionApi {
     const values = params ?? [];
     const coordinates: Record<string, number> = {};
     const parameters = values.flatMap(param => {
-      const definition = access.parameters.find(item => item.name === param.name);
+      const definition = access.parameters.find(item => (item.inputName ?? item.name) === param.name);
       if (definition == null) {
         throw new Error(`Unknown resource parameter: ${param.name}`);
       }
@@ -124,8 +130,9 @@ export class DevExecutionApi implements ExecutionApi {
       if (param.value === (definition.defaultValue ?? '')) {
         return [];
       }
-      const value = definition.kind === 'FLOAT' || definition.kind === 'INTEGER' ? Number(param.value)
-        : definition.kind === 'BOOLEAN' ? param.value === 'true' : param.value;
+      const scalarValue = (rawValue: string): string | number | boolean => definition.kind === 'FLOAT' || definition.kind === 'INTEGER' ? Number(rawValue)
+        : definition.kind === 'BOOLEAN' ? rawValue === 'true' : rawValue;
+      const value = definition.multipleValues ? param.value.split(',').map(scalarValue) : scalarValue(param.value);
       return [{ id: definition.id, value }];
     });
     return { type: access.type, ...coordinates, parameters };

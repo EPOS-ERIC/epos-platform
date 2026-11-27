@@ -175,6 +175,9 @@
                           <span *ngSwitchCase="keyValue.key === 'Service Endpoint'">
                             {{ keyValue.value }}
                           </span>
+                          <span *ngSwitchCase="keyValue.key === 'Keywords'">
+                            <app-vocabulary-tooltip [keywords]="keyValue.value"></app-vocabulary-tooltip>
+                          </span>
                           <mat-accordion multi="false"
                             *ngSwitchCase="keyValue.key === 'Service Provider' && keyValue.value !== null">
                             <ng-container *ngIf="keyValue.value.relatedDataProvider.length > 0">

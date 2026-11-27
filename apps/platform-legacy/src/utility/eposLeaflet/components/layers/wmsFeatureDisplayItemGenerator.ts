@@ -1,3 +1,4 @@
+import { SimpleDistributionFormat } from 'api/webApi/data/impl/simpleDistributionFormat';
 import { HttpClient } from '@angular/common/http';
 import * as L from 'leaflet';
 import { FeatureDisplayItem } from '../featureDisplay/featureDisplayItem';
@@ -99,7 +100,7 @@ export class WmsFeatureDisplayItemGenerator implements FeatureDisplayItemGenerat
       const parameters = new Map<string, null | string>();
       parameters.set('request', 'GetFeatureInfo');
       parameters.set('service', 'WMS');
-      parameters.set('version', layer.options.get('version') ? layer.options.get('version') : null);
+      parameters.set('version', layer.options.get('version') ?? '1.1.1');
       parameters.set('x', clickEvent.containerPoint.round().x.toString());
       parameters.set('i', clickEvent.containerPoint.round().x.toString()); // backwards compatible x
       parameters.set('y', clickEvent.containerPoint.round().y.toString());
@@ -107,7 +108,6 @@ export class WmsFeatureDisplayItemGenerator implements FeatureDisplayItemGenerat
       parameters.set('layers', layer.options.get('layers'));
       parameters.set('query_layers', layer.options.get('layers'));
       parameters.set('styles', layer.options.get('styles') ? layer.options.get('styles') : null);
-      parameters.set('crs', String(requestCrs));
       parameters.set('bbox', bounds.asArray().reverse().join(','));
       parameters.set('width', mapSize.widthPx.toString());
       parameters.set('height', mapSize.heightPx.toString());
@@ -121,13 +121,22 @@ export class WmsFeatureDisplayItemGenerator implements FeatureDisplayItemGenerat
         });
       }
 
-      const url =
-        layer.url +
-        '?' +
-        Array.from(parameters.keys())
-          .filter((key) => null != parameters.get(key))
-          .map((key) => `${key}=${parameters.get(key)}`)
-          .join('&');
+      const projectionKey = parseFloat(parameters.get('version')!) >= 1.3 ? 'crs' : 'srs';
+      if (!parameters.has(projectionKey)) {
+        parameters.set(projectionKey, String(requestCrs));
+      }
+
+      const providerParameters = layer.options.get<URLSearchParams>('customLayerOptionFeatureInfoParameters');
+      const requestParameters = new URLSearchParams();
+      parameters.forEach((value, key) => {
+        if (value != null) {
+          requestParameters.set(key, value);
+        }
+      });
+      const baseUrl = layer.options.get<string>('customLayerOptionFeatureInfoUrl') ?? layer.url;
+      const url = SimpleDistributionFormat.withParameters(
+        providerParameters == null ? baseUrl : SimpleDistributionFormat.withParameters(baseUrl, providerParameters), requestParameters,
+      );
 
       /*
               const parametersBbox = parameters.get('bbox');
@@ -138,7 +147,7 @@ export class WmsFeatureDisplayItemGenerator implements FeatureDisplayItemGenerat
               console.log(parametersBboxArray);
 
        */
-      return url.replace(/ /g, '');
+      return url;
     } else {
       return '';
     }

@@ -184,8 +184,9 @@ export class ExecutionService {
     distributionSummary: DistributionSummary,
     paramDefinitions?: ParameterDefinitions,
     params: null | Array<ParameterValue> = null,
+    format?: DistributionFormat,
   ): Promise<null | string> {
-    return this.apiService.getOriginatorUrl(distributionSummary, params);
+    return this.apiService.getOriginatorUrl(distributionSummary, params, format);
   }
 
   /**

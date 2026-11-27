@@ -29,6 +29,7 @@ export interface ExecutionApi {
    */
   getOriginatorUrl(
     distribution: DistributionSummary,
-    params: null | Array<ParameterValue>
+    params: null | Array<ParameterValue>,
+    format?: DistributionFormat,
   ): Promise<string>;
 }

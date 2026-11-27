@@ -6,7 +6,7 @@ import { ItemSummary } from './webApi/data/itemSummary.interface';
 import { DistributionSummary } from './webApi/data/distributionSummary.interface';
 import { DistributionDetails } from './webApi/data/distributionDetails.interface';
 import { ParameterValue } from './webApi/data/parameterValue.interface';
-import { DiscoverResponse, DiscoverRequest } from './webApi/classes/discoverApi.interface';
+import { ConceptMetadata, DiscoverResponse, DiscoverRequest } from './webApi/classes/discoverApi.interface';
 import { DistributionFormat } from './webApi/data/distributionFormat.interface';
 import { Environment } from './webApi/data/environments/environment.interface';
 import { EnvironmentType } from './webApi/data/environments/environmentType.interface';
@@ -96,6 +96,16 @@ export class ApiService implements Api {
   }
 
   // -----------------
+
+  public getConcepts(): Promise<ConceptMetadata[]> {
+    this.checkApiBeforeCall();
+    return this.delegate!.getConcepts();
+  }
+
+  public searchConcept(conceptId: string): Promise<string[]> {
+    this.checkApiBeforeCall();
+    return this.delegate!.searchConcept(conceptId);
+  }
 
   public discover(request: DiscoverRequest): Promise<null | DiscoverResponse> {
     this.checkApiBeforeCall();
@@ -191,9 +201,9 @@ export class ApiService implements Api {
     return this.delegate!.getExecuteUrl(format, params);
   }
 
-  public getOriginatorUrl(distribution: DistributionSummary, params: null | Array<ParameterValue>): Promise<string> {
+  public getOriginatorUrl(distribution: DistributionSummary, params: null | Array<ParameterValue>, format?: DistributionFormat): Promise<string> {
     this.checkApiBeforeCall();
-    return this.delegate!.getOriginatorUrl(distribution, params);
+    return this.delegate!.getOriginatorUrl(distribution, params, format);
   }
 
   /**

@@ -412,6 +412,23 @@ export class DetailsDialogComponent implements OnInit, AfterViewInit, OnDestroy 
     // 5. Description
     tableData.push(this.makeKeyValue('Description', this.stringOrElse(itemDetails.getDescription(), alt)));
 
+    const datasetMetadata = itemDetails.datasetMetadata;
+    if (datasetMetadata != null) {
+      const datasetRows: Array<[string, string | number | null]> = [
+        ['Conforms To', datasetMetadata.conformsTo],
+        ['Provenance', datasetMetadata.provenance],
+        ['Dataset Type', datasetMetadata.type],
+        ['Dataset Version', datasetMetadata.version],
+        ['Spatial Resolution (m)', datasetMetadata.spatialResolutionInMeters],
+        ['Temporal Resolution (s)', datasetMetadata.temporalResolution],
+      ];
+      datasetRows.forEach(([label, value]) => {
+        if (value != null && (typeof value !== 'string' || value.trim().length > 0)) {
+          tableData.push(this.makeKeyValue(label, String(value)));
+        }
+      });
+    }
+
     // 6. Spatial
     tableData.push(this.makeKeyValue(!isWebService ? 'Location' : 'Spatial Coverage', this.getSpatialValue(itemDetails)));
 
@@ -471,6 +488,21 @@ export class DetailsDialogComponent implements OnInit, AfterViewInit, OnDestroy 
 
         tableService.push(this.makeKeyValue('Service Endpoint', this.stringOrElse(itemDetails.getWebServiceEndpoint(), alt)));
         tableService.push(this.makeKeyValue('Service Documentation', this.stringOrElse(itemDetails.getDocumentation(), alt)));
+        const serviceMetadata = itemDetails.webServiceMetadata;
+        if (serviceMetadata != null) {
+          const serviceRows: Array<[string, string | null]> = [
+            ['Service Type', serviceMetadata.type],
+            ['Keywords', serviceMetadata.keywords.join('; ')],
+            ['Access Rights', serviceMetadata.accessRights],
+            ['License', serviceMetadata.license],
+            ['Categories', serviceMetadata.categories.map(category => category.name).join('; ')],
+          ];
+          serviceRows.forEach(([label, value]) => {
+            if (value != null && value.trim().length > 0) {
+              tableService.push(this.makeKeyValue(label, value));
+            }
+          });
+        }
       }
     }
   }

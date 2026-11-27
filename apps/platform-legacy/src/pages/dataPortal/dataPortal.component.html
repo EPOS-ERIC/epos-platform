@@ -1,15 +1,46 @@
 <mat-drawer-container class="sidenav-container sidenav-container-left" autosize>
-  <ng-container *ngIf="hasModuleData">
-    <div class="data-panel-button-wrapper">
-      <mat-button-toggle #dataPanelButton class="left-sidenav-data-toggle" matTooltip="{{ dataPanelSidenav.opened ? 'Close' : 'Open ' }} Data Tab" (click)="filterPanelToggle()">
-        <mat-icon aria-hidden="false" aria-label="LeftSidenav icon" [ngClass]="{ selected: dataPanelSidenav.opened }">
-          {{ dataPanelSidenav.opened ? 'chevron_left' : 'chevron_right' }}
-        </mat-icon>
-        <span [ngClass]="{ 'button-text': true, selected: dataPanelSidenav.opened }">DATA</span>
-        <span *ngIf="counterData > 0 && !dataPanelSidenav.opened" matBadge="{{ counterData }}" matBadgeOverlap="false"></span>
-      </mat-button-toggle>
-    </div>
+  <nav class="left-panel-tabs" aria-label="Data portal sections">
+    <mat-button-toggle
+      *ngFor="let tab of conceptTabs"
+      class="left-sidenav-concept-toggle"
+      [class.left-sidenav-data-toggle]="tab.panel === 'data'"
+      [class.left-sidenav-registry-toggle]="tab.panel === 'registry'"
+      [class.left-sidenav-software-toggle]="tab.panel === 'software'"
+      [checked]="isConceptOpen(tab)"
+      [aria-label]="tab.name"
+      [matTooltip]="tab.name"
+      (change)="toggleConcept(tab)">
+      <mat-icon aria-hidden="true" [class.selected]="isConceptOpen(tab)">
+        {{ isConceptOpen(tab) ? 'chevron_left' : 'chevron_right' }}
+      </mat-icon>
+      <span class="button-text" [class.selected]="isConceptOpen(tab)">{{ tab.name }}</span>
+      <ng-container *ngIf="!isConceptOpen(tab)">
+        <span *ngIf="tab.panel === 'data' && counterData > 0" [matBadge]="counterData" matBadgeOverlap="false"></span>
+        <span *ngIf="tab.panel === 'registry' && counterRegistry > 0" [matBadge]="counterRegistry" matBadgeOverlap="false"></span>
+        <span *ngIf="tab.panel === 'software' && counterSoftware > 0" [matBadge]="counterSoftware" matBadgeOverlap="false"></span>
+      </ng-container>
+    </mat-button-toggle>
+    <mat-button-toggle
+      *ngIf="hasModuleAnalysis"
+      class="left-sidenav-analysis-toggle"
+      matTooltip="{{ analysisPanelSidenav?.opened ? 'Close' : 'Open' }} Analysis Tab"
+      (click)="analysisPanelToggle()">
+      <mat-icon aria-hidden="true" [class.selected]="analysisPanelSidenav?.opened">
+        {{ analysisPanelSidenav?.opened ? 'chevron_left' : 'chevron_right' }}
+      </mat-icon>
+      <span class="button-text" [class.selected]="analysisPanelSidenav?.opened">ANALYSIS</span>
+      <span *ngIf="!analysisPanelSidenav?.opened && counterEnvironment > 0" [matBadge]="counterEnvironment" matBadgeOverlap="false"></span>
+    </mat-button-toggle>
+  </nav>
+
+  <div *ngIf="conceptsLoadFailed" class="concepts-load-error" role="alert">
+    Unable to load concepts.
+    <button mat-button type="button" (click)="loadConceptTabs()">Retry</button>
+  </div>
+
+  <ng-container *ngFor="let tab of conceptTabs" [ngSwitch]="tab.panel">
     <mat-sidenav
+      *ngSwitchCase="'data'"
       id="sidenavleft"
       (closedStart)="dataPanelStatusChange(true)"
       (openedStart)="dataPanelStatusChange(false)"
@@ -25,45 +56,8 @@
         <app-data-panel></app-data-panel>
       </div>
     </mat-sidenav>
-  </ng-container>
-
-  <ng-container *ngIf="hasModuleAnalysis">
-    <div #analysisPanelButton class="analysis-panel-button-wrapper">
-      <mat-button-toggle class="left-sidenav-analysis-toggle" matTooltip="{{ analysisPanelSidenav.opened ? 'Close' : 'Open' }} Analysis Tab" (click)="analysisPanelToggle()">
-        <mat-icon aria-hidden="false" aria-label="LeftSidenav icon" [ngClass]="{ selected: analysisPanelSidenav.opened }">
-          {{ analysisPanelSidenav.opened ? 'chevron_left' : 'chevron_right' }}
-        </mat-icon>
-        <span [ngClass]="{ 'button-text': true, selected: analysisPanelSidenav.opened }">ANALYSIS</span>
-        <span *ngIf="!analysisPanelSidenav.opened && counterEnvironment > 0" matBadge="{{ counterEnvironment }}" matBadgeOverlap="false"></span>
-      </mat-button-toggle>
-    </div>
     <mat-sidenav
-      #analysisPanelSidenav
-      id="sidenavleftanalysis"
-      [class]="{
-        sidenavanalysis: true,
-        'sidenav-left': true,
-        'sidenav-left-close-analysis': !analysisPanelSidenav.opened
-      }"
-      closed
-      mode="side">
-      <div #analysisPanel class="analysisPanel">
-        <app-analysis-panel></app-analysis-panel>
-      </div>
-    </mat-sidenav>
-  </ng-container>
-
-  <ng-container *ngIf="hasModuleRegistry">
-    <div #registryPanelButton class="registry-panel-button-wrapper">
-      <mat-button-toggle class="left-sidenav-registry-toggle" matTooltip="{{ registryPanelSidenav.opened ? 'Close' : 'Open' }} Facility Tab" (click)="registryPanelToggle()">
-        <mat-icon aria-hidden="false" aria-label="LeftSidenav icon" [ngClass]="{ selected: registryPanelSidenav.opened }">
-          {{ registryPanelSidenav.opened ? 'chevron_left' : 'chevron_right' }}
-        </mat-icon>
-        <span [ngClass]="{ 'button-text': true, selected: registryPanelSidenav.opened }">FACILITIES</span>
-        <span *ngIf="counterRegistry > 0 && !registryPanelSidenav.opened" matBadge="{{ counterRegistry }}" matBadgeOverlap="false"></span>
-      </mat-button-toggle>
-    </div>
-    <mat-sidenav
+      *ngSwitchCase="'registry'"
       #registryPanelSidenav
       id="sidenavleftregistry"
       (closedStart)="registryPanelStatusChange(true)"
@@ -80,36 +74,70 @@
         <app-registry-panel></app-registry-panel>
       </div>
     </mat-sidenav>
+    <mat-sidenav
+      *ngSwitchCase="'software'"
+      #softwarePanelSidenav
+      id="sidenavleftsoftware"
+      (closedStart)="softwarePanelStatusChange(true)"
+      (openedStart)="softwarePanelStatusChange(false)"
+      [class]="{
+        sidenavsoftware: true,
+        'sidenav-left': true,
+        'sidenav-left-close': !softwarePanelSidenav.opened
+      }"
+      closed
+      mode="side"
+      data-cy="software-sidenav">
+      <div #softwarePanel class="softwarePanel">
+        <app-software-panel></app-software-panel>
+      </div>
+    </mat-sidenav>
   </ng-container>
 
-  <ng-container *ngIf="hasModuleSoftware">
-  <div #softwarePanelButton class="software-panel-button-wrapper">
-    <mat-button-toggle class="left-sidenav-software-toggle" matTooltip="{{ softwarePanelSidenav.opened ? 'Close' : 'Open' }} Software Tab" (click)="softwarePanelToggle()">
-      <mat-icon aria-hidden="false" aria-label="LeftSidenav icon" [ngClass]="{ selected: softwarePanelSidenav.opened }">
-        {{ softwarePanelSidenav.opened ? 'chevron_left' : 'chevron_right' }}
-      </mat-icon>
-      <span [ngClass]="{ 'button-text': true, selected: softwarePanelSidenav.opened }">SOFTWARE</span>
-      <span *ngIf="counterSoftware > 0 && !softwarePanelSidenav.opened" matBadge="{{ counterSoftware }}" matBadgeOverlap="false"></span>
-    </mat-button-toggle>
-  </div>
   <mat-sidenav
-    #softwarePanelSidenav
-    id="sidenavleftsoftware"
-    (closedStart)="softwarePanelStatusChange(true)"
-    (openedStart)="softwarePanelStatusChange(false)"
-    [class]="{
-      sidenavsoftware: true,
-      'sidenav-left': true,
-      'sidenav-left-close': !softwarePanelSidenav.opened
-    }"
-    closed
-    mode="side"
-    data-cy="software-sidenav">
-    <div #softwarePanel class="softwarePanel">
-      <app-software-panel></app-software-panel>
-    </div>
+    #conceptSidenav
+    class="sidenav-left"
+    [class.sidenav-left-close]="activeConcept === null"
+    [opened]="activeConcept !== null"
+    (openedStart)="updateLeftPanelWidth()"
+    (closedStart)="updateLeftPanelWidth()"
+    mode="side">
+    <section #conceptPanel class="concept-panel">
+      <ng-container *ngIf="activeConcept as tab">
+        <h2>{{ tab.name }}</h2>
+        <div *ngIf="tab.searchFailed; else searchResults" role="alert">
+          Unable to load results.
+          <button mat-button type="button" (click)="searchConcept(tab)">Retry</button>
+        </div>
+        <ng-template #searchResults>
+          <ng-container *ngIf="tab.results as results; else loadingResults">
+            <ul *ngIf="results.length > 0; else noResults">
+              <li *ngFor="let result of results">{{ result }}</li>
+            </ul>
+          </ng-container>
+        </ng-template>
+        <ng-template #loadingResults><p role="status">Loading results…</p></ng-template>
+        <ng-template #noResults><p>No results found.</p></ng-template>
+      </ng-container>
+    </section>
   </mat-sidenav>
-</ng-container>
+
+  <ng-container *ngIf="hasModuleAnalysis">
+    <mat-sidenav
+      #analysisPanelSidenav
+      id="sidenavleftanalysis"
+      [class]="{
+        sidenavanalysis: true,
+        'sidenav-left': true,
+        'sidenav-left-close-analysis': !analysisPanelSidenav.opened
+      }"
+      closed
+      mode="side">
+      <div #analysisPanel class="analysisPanel">
+        <app-analysis-panel></app-analysis-panel>
+      </div>
+    </mat-sidenav>
+  </ng-container>
 
   <ng-container *ngIf="hasModuleData">
     <div *ngIf="tableInResults">

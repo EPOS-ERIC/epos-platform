@@ -76,7 +76,7 @@
             <th mat-header-cell *matHeaderCellDef [hidden]="onlyDownload">Copy URL</th>
             <td mat-cell *matCellDef="let element" [hidden]="onlyDownload">
               <div class="actions">
-                <button mat-icon-button [disabled]="element.type === 'CONVERTED'" (click)="copyUrl(element)">
+                <button mat-icon-button [disabled]="element.type === 'CONVERTED' || element.distributionFormat?.getType() === 'SERVICE'" (click)="copyUrl(element)">
                   <mat-icon matTooltip="Copy Url">link</mat-icon>
                 </button>
               </div>

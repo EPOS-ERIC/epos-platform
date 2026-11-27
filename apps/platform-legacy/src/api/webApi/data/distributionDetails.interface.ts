@@ -9,9 +9,27 @@ import { DistributionContactPoint } from './distributionContactPoint.interface';
 import { DistributionCategories } from './distributionCategories.interface';
 import { Creator } from './creator.interface';
 
+export interface DatasetDetailsMetadata {
+  conformsTo: string | null;
+  provenance: string | null;
+  type: string | null;
+  version: string | null;
+  spatialResolutionInMeters: number | null;
+  temporalResolution: number | null;
+}
+
+export interface WebServiceDetailsMetadata {
+  type: string | null;
+  keywords: Array<string>;
+  accessRights: string | null;
+  license: string | null;
+  categories: Array<{ id: string; name: string }>;
+}
 
 export interface DistributionDetails extends DistributionSummary {
   // id, name, usable,  getAvailableFormats
+  readonly datasetMetadata?: DatasetDetailsMetadata | null;
+  readonly webServiceMetadata?: WebServiceDetailsMetadata | null;
 
   getEndPoint(): string;
 
