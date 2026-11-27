@@ -4,8 +4,6 @@ SELECT
     concept.name AS concept_name,
     owning_group.id AS group_id,
     owning_group.name AS group_name,
-    dataset.id AS resource_id,
-    version.id AS version_id,
     sqlc.embed(distribution)
 FROM
     distributions AS distribution

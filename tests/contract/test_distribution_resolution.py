@@ -32,12 +32,17 @@ class DistributionResolutionContractTest(DistributionContractTestCase):
         dynamic["title"] = "monitoring-dynamic"
         detail = self.create_draft([dynamic, wfs_distribution(), wms, wmts])
         ids = {item["title"]: item["id"] for item in detail["metadata"]["distributions"]}
+        reloaded = self.details(detail["resource_id"], detail["id"])
+        self.assertEqual(
+            {item["title"]: item["web_service"]["type"] for item in reloaded["metadata"]["distributions"]},
+            {"monitoring-dynamic": "DYNAMIC", "WFS": "WFS", "monitoring-wms": "WMS", "monitoring-wmts": "WMTS"},
+        )
         self.transition(detail, "submit")
         self.transition(detail, "publish")
         response = self.gateway.get("/monitoring/distributions")
         self.assertEqual(response.status_code, 200)
         targets = {
-            item["distribution_id"]: item
+            item["version_id"]: item
             for concept in response.json()
             for group in concept["groups"]
             for item in group["distributions"]
@@ -62,11 +67,11 @@ class DistributionResolutionContractTest(DistributionContractTestCase):
             response = self.gateway.get("/monitoring/distributions")
             self.assertEqual(response.status_code, 200)
             return {
-                distribution["distribution_id"]: distribution
+                distribution["version_id"]: distribution
                 for concept in response.json()
                 for group in concept["groups"]
                 for distribution in group["distributions"]
-                if distribution["distribution_id"] in ids
+                if distribution["version_id"] in ids
             }
 
         self.assertEqual(targets(), {})
@@ -78,12 +83,76 @@ class DistributionResolutionContractTest(DistributionContractTestCase):
         for distribution in distributions:
             target = published[distribution["id"]]
             self.assertEqual(target["name"], distribution["title"])
-            self.assertEqual(target["resource_id"], detail["resource_id"])
-            self.assertEqual(target["version_id"], detail["id"])
+            self.assertEqual(target["resource_id"], distribution["resource_id"])
             self.assertEqual(target["request"]["method"], "GET")
             self.assertTrue(target["request"]["url"].startswith("https://provider.invalid/"))
         self.transition(detail, "unpublish")
         self.assertEqual(targets(), {})
+
+    def test_monitoring_replaces_updated_distribution(self) -> None:
+        """Catch monitoring targets changing identity or retaining archived distribution versions."""
+        file = {
+            "title": "original file", "description": "Synthetic file", "type": "DOWNLOADABLE_FILE",
+            "downloadable_file": {"url": "https://provider.invalid/original", "format": "text/plain"},
+        }
+        detail = self.create_draft([file])
+        original = detail["metadata"]["distributions"][0]
+        stable_id = original["resource_id"]
+
+        def targets() -> list[dict]:
+            response = self.gateway.get("/monitoring/distributions")
+            self.assertEqual(response.status_code, 200)
+            return [
+                item
+                for concept in response.json()
+                for group in concept["groups"]
+                for item in group["distributions"]
+                if item["resource_id"] == stable_id
+            ]
+
+        self.transition(detail, "submit")
+        self.transition(detail, "publish")
+        published = targets()
+        self.assertEqual(len(published), 1)
+        self.assertEqual(published[0]["version_id"], original["id"])
+        self.assertEqual(published[0]["name"], "original file")
+        self.assertNotIn("distribution_id", published[0])
+
+        copied = self.gateway.post(
+            "/resources/{resourceType}/{id}/draft-from-publication",
+            resourceType="dataset", id=detail["resource_id"],
+        )
+        self.assertEqual(copied.status_code, 201)
+        draft_version = self.version(detail["resource_id"], "DRAFT")
+        draft = self.details(detail["resource_id"], draft_version["id"])
+        copied_distribution = draft["metadata"]["distributions"][0]
+        self.assertEqual(copied_distribution["resource_id"], stable_id)
+        self.assertNotEqual(copied_distribution["id"], original["id"])
+        updated_file = {
+            **file,
+            "resource_id": stable_id,
+            "title": "updated file",
+            "downloadable_file": {"url": "https://provider.invalid/updated", "format": "text/plain"},
+        }
+        metadata = {
+            "title": draft["metadata"]["title"],
+            "description": draft["metadata"]["description"],
+            "distributions": [updated_file],
+        }
+        self.assertEqual(self.replace_response(draft, metadata).status_code, 200)
+        updated = self.details(detail["resource_id"], draft["id"])
+        self.assertEqual(targets()[0]["version_id"], original["id"])
+        self.transition(updated, "submit")
+        self.transition(updated, "publish")
+
+        published = targets()
+        self.assertEqual(len(published), 1)
+        self.assertEqual(published[0]["resource_id"], stable_id)
+        self.assertEqual(published[0]["version_id"], copied_distribution["id"])
+        self.assertEqual(published[0]["name"], "updated file")
+        self.assertEqual(published[0]["request"]["url"], "https://provider.invalid/updated")
+        self.assertNotEqual(published[0]["version_id"], original["id"])
+        self.assertNotIn("distribution_id", published[0])
 
     def test_monitoring_uses_distribution_owner_contacts(self) -> None:
         """Verify service and file monitoring targets use their respective contacts."""
@@ -113,7 +182,7 @@ class DistributionResolutionContractTest(DistributionContractTestCase):
         response = self.gateway.get("/monitoring/distributions")
         self.assertEqual(response.status_code, 200)
         targets = {
-            item["distribution_id"]: item
+            item["version_id"]: item
             for concept in response.json()
             for group in concept["groups"]
             for item in group["distributions"]

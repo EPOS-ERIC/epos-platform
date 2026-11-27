@@ -3058,9 +3058,8 @@ components:
     MonitoringDistribution:
       type: object
       additionalProperties: false
-      required: [distribution_id, resource_id, version_id, name, request, contact_points]
+      required: [resource_id, version_id, name, request, contact_points]
       properties:
-        distribution_id: { type: string, format: uuid }
         resource_id: { type: string, format: uuid }
         version_id: { type: string, format: uuid }
         name: { type: string }

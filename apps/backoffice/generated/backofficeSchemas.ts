@@ -231,10 +231,6 @@ export type MonitoringDistribution = {
   /**
    * @format uuid
    */
-  distribution_id: string;
-  /**
-   * @format uuid
-   */
   resource_id: string;
   /**
    * @format uuid

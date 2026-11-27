@@ -45,15 +45,11 @@ func toAPIMonitoringDistribution(value *metadatalifecyclev1.MonitoringDistributi
 	if value == nil || value.Request == nil {
 		return gatewayapi.MonitoringDistribution{}, fmt.Errorf("missing monitoring distribution or request")
 	}
-	id, err := parseUUID("distribution_id", value.DistributionId)
+	id, err := parseUUID("version_id", value.VersionId)
 	if err != nil {
 		return gatewayapi.MonitoringDistribution{}, err
 	}
 	resourceID, err := parseUUID("resource_id", value.ResourceId)
-	if err != nil {
-		return gatewayapi.MonitoringDistribution{}, err
-	}
-	versionID, err := parseUUID("version_id", value.VersionId)
 	if err != nil {
 		return gatewayapi.MonitoringDistribution{}, err
 	}
@@ -88,7 +84,10 @@ func toAPIMonitoringDistribution(value *metadatalifecyclev1.MonitoringDistributi
 		contacts = append(contacts, gatewayapi.MonitoringContactPoint{ID: contactID, Email: contact.Email})
 	}
 	return gatewayapi.MonitoringDistribution{
-		DistributionID: id, ResourceID: resourceID, VersionID: versionID, Name: value.Name,
-		Request: request, ContactPoints: contacts,
+		VersionID:     id,
+		ResourceID:    resourceID,
+		Name:          value.Name,
+		Request:       request,
+		ContactPoints: contacts,
 	}, nil
 }

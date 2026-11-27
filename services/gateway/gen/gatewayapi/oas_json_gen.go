@@ -19722,10 +19722,6 @@ func (s *MonitoringDistribution) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *MonitoringDistribution) encodeFields(e *jx.Encoder) {
 	{
-		e.FieldStart("distribution_id")
-		json.EncodeUUID(e, s.DistributionID)
-	}
-	{
 		e.FieldStart("resource_id")
 		json.EncodeUUID(e, s.ResourceID)
 	}
@@ -19751,13 +19747,12 @@ func (s *MonitoringDistribution) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfMonitoringDistribution = [6]string{
-	0: "distribution_id",
-	1: "resource_id",
-	2: "version_id",
-	3: "name",
-	4: "request",
-	5: "contact_points",
+var jsonFieldsNameOfMonitoringDistribution = [5]string{
+	0: "resource_id",
+	1: "version_id",
+	2: "name",
+	3: "request",
+	4: "contact_points",
 }
 
 // Decode decodes MonitoringDistribution from json.
@@ -19769,20 +19764,8 @@ func (s *MonitoringDistribution) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "distribution_id":
-			requiredBitSet[0] |= 1 << 0
-			if err := func() error {
-				v, err := json.DecodeUUID(d)
-				s.DistributionID = v
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"distribution_id\"")
-			}
 		case "resource_id":
-			requiredBitSet[0] |= 1 << 1
+			requiredBitSet[0] |= 1 << 0
 			if err := func() error {
 				v, err := json.DecodeUUID(d)
 				s.ResourceID = v
@@ -19794,7 +19777,7 @@ func (s *MonitoringDistribution) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"resource_id\"")
 			}
 		case "version_id":
-			requiredBitSet[0] |= 1 << 2
+			requiredBitSet[0] |= 1 << 1
 			if err := func() error {
 				v, err := json.DecodeUUID(d)
 				s.VersionID = v
@@ -19806,7 +19789,7 @@ func (s *MonitoringDistribution) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"version_id\"")
 			}
 		case "name":
-			requiredBitSet[0] |= 1 << 3
+			requiredBitSet[0] |= 1 << 2
 			if err := func() error {
 				v, err := d.Str()
 				s.Name = string(v)
@@ -19818,7 +19801,7 @@ func (s *MonitoringDistribution) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"name\"")
 			}
 		case "request":
-			requiredBitSet[0] |= 1 << 4
+			requiredBitSet[0] |= 1 << 3
 			if err := func() error {
 				if err := s.Request.Decode(d); err != nil {
 					return err
@@ -19828,7 +19811,7 @@ func (s *MonitoringDistribution) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"request\"")
 			}
 		case "contact_points":
-			requiredBitSet[0] |= 1 << 5
+			requiredBitSet[0] |= 1 << 4
 			if err := func() error {
 				s.ContactPoints = make([]MonitoringContactPoint, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
@@ -19855,7 +19838,7 @@ func (s *MonitoringDistribution) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00111111,
+		0b00011111,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.

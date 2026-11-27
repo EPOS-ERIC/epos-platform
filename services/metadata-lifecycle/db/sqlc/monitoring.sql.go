@@ -101,8 +101,6 @@ SELECT
     concept.name AS concept_name,
     owning_group.id AS group_id,
     owning_group.name AS group_name,
-    dataset.id AS resource_id,
-    version.id AS version_id,
     distribution.id, distribution.resource_id, distribution.dataset_version_id, distribution.title, distribution.description, distribution.license, distribution.byte_size, distribution.type, distribution.downloadable_file_url, distribution.downloadable_file_format, distribution.web_service_id
 FROM
     distributions AS distribution
@@ -126,8 +124,6 @@ type ListPublishedMonitoringDistributionsRow struct {
 	ConceptName  string
 	GroupID      uuid.UUID
 	GroupName    string
-	ResourceID   uuid.UUID
-	VersionID    uuid.UUID
 	Distribution Distribution
 }
 
@@ -145,8 +141,6 @@ func (q *Queries) ListPublishedMonitoringDistributions(ctx context.Context) ([]L
 			&i.ConceptName,
 			&i.GroupID,
 			&i.GroupName,
-			&i.ResourceID,
-			&i.VersionID,
 			&i.Distribution.ID,
 			&i.Distribution.ResourceID,
 			&i.Distribution.DatasetVersionID,

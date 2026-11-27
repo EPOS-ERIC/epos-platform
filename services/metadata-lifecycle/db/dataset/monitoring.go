@@ -25,7 +25,7 @@ func (r *Repo) MonitoringDistributions(ctx context.Context) ([]domain.Monitoring
 		if row.Distribution.WebServiceID != nil {
 			serviceIDs = append(serviceIDs, *row.Distribution.WebServiceID)
 		} else {
-			versionIDs = append(versionIDs, row.VersionID)
+			versionIDs = append(versionIDs, row.Distribution.DatasetVersionID)
 		}
 	}
 
@@ -44,16 +44,6 @@ func (r *Repo) MonitoringDistributions(ctx context.Context) ([]domain.Monitoring
 		contactsByVersion[contact.DatasetVersionID] = append(contactsByVersion[contact.DatasetVersionID], toDomainContactPoint(contact.ContactPoint))
 	}
 
-	return r.mapMonitoringDistributions(ctx, rows, services, failures, contactsByVersion), nil
-}
-
-func (r *Repo) mapMonitoringDistributions(
-	ctx context.Context,
-	rows []sqlc.ListPublishedMonitoringDistributionsRow,
-	services map[uuid.UUID]domain.WebService,
-	failures map[uuid.UUID]error,
-	contactsByVersion map[uuid.UUID][]domain.ContactPoint,
-) []domain.MonitoringDistribution {
 	result := make([]domain.MonitoringDistribution, 0, len(rows))
 	for _, row := range rows {
 		item := domain.MonitoringDistribution{
@@ -61,8 +51,6 @@ func (r *Repo) mapMonitoringDistributions(
 			ConceptName: row.ConceptName,
 			GroupID:     row.GroupID,
 			GroupName:   row.GroupName,
-			ResourceID:  row.ResourceID,
-			VersionID:   row.VersionID,
 		}
 
 		var err error
@@ -81,7 +69,7 @@ func (r *Repo) mapMonitoringDistributions(
 					item.ContactPoints = item.Distribution.WebService.Common().ContactPoints
 				}
 			} else {
-				item.ContactPoints = contactsByVersion[row.VersionID]
+				item.ContactPoints = contactsByVersion[row.Distribution.DatasetVersionID]
 			}
 
 			if err == nil {
@@ -111,23 +99,32 @@ func (r *Repo) mapMonitoringDistributions(
 		result = append(result, item)
 	}
 
-	return result
+	return result, nil
 }
 
 func readMonitoringWebServices(ctx context.Context, q *sqlc.Queries, ids []uuid.UUID) (map[uuid.UUID]domain.WebService, map[uuid.UUID]error, error) {
-	result := make(map[uuid.UUID]domain.WebService, len(ids))
-	failures := make(map[uuid.UUID]error)
 	if len(ids) == 0 {
-		return result, failures, nil
+		return map[uuid.UUID]domain.WebService{}, map[uuid.UUID]error{}, nil
 	}
 
 	rows, err := q.ListMonitoringWebServices(ctx, ids)
 	if err != nil {
 		return nil, nil, fmt.Errorf("list monitoring web services: %w", err)
 	}
+	return readWebServiceRows(ctx, q, rows)
+}
 
+func readWebServiceRows(ctx context.Context, q *sqlc.Queries, rows []sqlc.WebService) (map[uuid.UUID]domain.WebService, map[uuid.UUID]error, error) {
+	result := make(map[uuid.UUID]domain.WebService, len(rows))
+	failures := make(map[uuid.UUID]error)
+	if len(rows) == 0 {
+		return result, failures, nil
+	}
+
+	ids := make([]uuid.UUID, 0, len(rows))
 	providerIDs := make([]uuid.UUID, 0, len(rows))
 	for _, row := range rows {
+		ids = append(ids, row.ID)
 		service, err := toDomainWebService(row)
 		if err != nil {
 			failures[row.ID] = err
@@ -288,14 +285,14 @@ func readMonitoringWebServices(ctx context.Context, q *sqlc.Queries, ids []uuid.
 		}
 	}
 
-	if err := readMonitoringParameters(ctx, q, ids, result, failures); err != nil {
+	if err := readWebServiceParameters(ctx, q, ids, result, failures); err != nil {
 		return nil, nil, err
 	}
 
 	return result, failures, nil
 }
 
-func readMonitoringParameters(
+func readWebServiceParameters(
 	ctx context.Context,
 	q *sqlc.Queries,
 	ids []uuid.UUID,

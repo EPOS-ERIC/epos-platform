@@ -69,15 +69,12 @@ func (s *Service) MonitoringDistributions(ctx context.Context, actor string) ([]
 			})
 		}
 
-		contacts := make([]domain.ContactPoint, len(row.ContactPoints))
-		copy(contacts, row.ContactPoints)
 		concept.Groups[groupIndex].Distributions = append(concept.Groups[groupIndex].Distributions, domain.MonitoringTarget{
 			ID:            row.Distribution.ID,
-			ResourceID:    row.ResourceID,
-			VersionID:     row.VersionID,
+			ResourceID:    row.Distribution.ResourceID,
 			Name:          row.Distribution.Title,
 			Request:       request,
-			ContactPoints: contacts,
+			ContactPoints: row.ContactPoints,
 		})
 	}
 

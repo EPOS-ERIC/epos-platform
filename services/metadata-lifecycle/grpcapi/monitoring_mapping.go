@@ -25,11 +25,14 @@ func toProtoMonitoringConcepts(values []domain.MonitoringConcept) []*metadatalif
 					})
 				}
 				mappedGroup.Distributions = append(mappedGroup.Distributions, &metadatalifecyclev1.MonitoringDistribution{
-					DistributionId: distribution.ID.String(), ResourceId: distribution.ResourceID.String(),
-					VersionId: distribution.VersionID.String(), Name: distribution.Name,
+					VersionId:  distribution.ID.String(),
+					ResourceId: distribution.ResourceID.String(),
+					Name:       distribution.Name,
 					Request: &metadatalifecyclev1.MonitoringRequest{
-						Method: string(distribution.Request.Method), Url: distribution.Request.URL,
-						Headers: distribution.Request.Headers, Body: distribution.Request.Body,
+						Method:  string(distribution.Request.Method),
+						Url:     distribution.Request.URL,
+						Headers: distribution.Request.Headers,
+						Body:    distribution.Request.Body,
 					},
 					ContactPoints: contacts,
 				})

@@ -10030,17 +10030,11 @@ func (s *MonitoringContactPoint) SetEmail(val string) {
 
 // Ref: #/components/schemas/MonitoringDistribution
 type MonitoringDistribution struct {
-	DistributionID uuid.UUID                `json:"distribution_id"`
-	ResourceID     uuid.UUID                `json:"resource_id"`
-	VersionID      uuid.UUID                `json:"version_id"`
-	Name           string                   `json:"name"`
-	Request        MonitoringRequest        `json:"request"`
-	ContactPoints  []MonitoringContactPoint `json:"contact_points"`
-}
-
-// GetDistributionID returns the value of DistributionID.
-func (s *MonitoringDistribution) GetDistributionID() uuid.UUID {
-	return s.DistributionID
+	ResourceID    uuid.UUID                `json:"resource_id"`
+	VersionID     uuid.UUID                `json:"version_id"`
+	Name          string                   `json:"name"`
+	Request       MonitoringRequest        `json:"request"`
+	ContactPoints []MonitoringContactPoint `json:"contact_points"`
 }
 
 // GetResourceID returns the value of ResourceID.
@@ -10066,11 +10060,6 @@ func (s *MonitoringDistribution) GetRequest() MonitoringRequest {
 // GetContactPoints returns the value of ContactPoints.
 func (s *MonitoringDistribution) GetContactPoints() []MonitoringContactPoint {
 	return s.ContactPoints
-}
-
-// SetDistributionID sets the value of DistributionID.
-func (s *MonitoringDistribution) SetDistributionID(val uuid.UUID) {
-	s.DistributionID = val
 }
 
 // SetResourceID sets the value of ResourceID.

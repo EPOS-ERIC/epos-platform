@@ -2101,15 +2101,14 @@ func (x *MonitoringRequest) GetBody() []byte {
 }
 
 type MonitoringDistribution struct {
-	state          protoimpl.MessageState    `protogen:"open.v1"`
-	DistributionId string                    `protobuf:"bytes,1,opt,name=distribution_id,json=distributionId,proto3" json:"distribution_id,omitempty"`
-	ResourceId     string                    `protobuf:"bytes,2,opt,name=resource_id,json=resourceId,proto3" json:"resource_id,omitempty"`
-	VersionId      string                    `protobuf:"bytes,3,opt,name=version_id,json=versionId,proto3" json:"version_id,omitempty"`
-	Name           string                    `protobuf:"bytes,4,opt,name=name,proto3" json:"name,omitempty"`
-	Request        *MonitoringRequest        `protobuf:"bytes,5,opt,name=request,proto3" json:"request,omitempty"`
-	ContactPoints  []*MonitoringContactPoint `protobuf:"bytes,6,rep,name=contact_points,json=contactPoints,proto3" json:"contact_points,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	state         protoimpl.MessageState    `protogen:"open.v1"`
+	VersionId     string                    `protobuf:"bytes,1,opt,name=version_id,json=versionId,proto3" json:"version_id,omitempty"`
+	ResourceId    string                    `protobuf:"bytes,2,opt,name=resource_id,json=resourceId,proto3" json:"resource_id,omitempty"`
+	Name          string                    `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	Request       *MonitoringRequest        `protobuf:"bytes,4,opt,name=request,proto3" json:"request,omitempty"`
+	ContactPoints []*MonitoringContactPoint `protobuf:"bytes,5,rep,name=contact_points,json=contactPoints,proto3" json:"contact_points,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *MonitoringDistribution) Reset() {
@@ -2142,9 +2141,9 @@ func (*MonitoringDistribution) Descriptor() ([]byte, []int) {
 	return file_metadata_lifecycle_v1_resource_proto_rawDescGZIP(), []int{24}
 }
 
-func (x *MonitoringDistribution) GetDistributionId() string {
+func (x *MonitoringDistribution) GetVersionId() string {
 	if x != nil {
-		return x.DistributionId
+		return x.VersionId
 	}
 	return ""
 }
@@ -2152,13 +2151,6 @@ func (x *MonitoringDistribution) GetDistributionId() string {
 func (x *MonitoringDistribution) GetResourceId() string {
 	if x != nil {
 		return x.ResourceId
-	}
-	return ""
-}
-
-func (x *MonitoringDistribution) GetVersionId() string {
-	if x != nil {
-		return x.VersionId
 	}
 	return ""
 }
@@ -9508,16 +9500,15 @@ const file_metadata_lifecycle_v1_resource_proto_rawDesc = "" +
 	"\fHeadersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\a\n" +
-	"\x05_body\"\xaf\x02\n" +
-	"\x16MonitoringDistribution\x12'\n" +
-	"\x0fdistribution_id\x18\x01 \x01(\tR\x0edistributionId\x12\x1f\n" +
-	"\vresource_id\x18\x02 \x01(\tR\n" +
-	"resourceId\x12\x1d\n" +
+	"\x05_body\"\x86\x02\n" +
+	"\x16MonitoringDistribution\x12\x1d\n" +
 	"\n" +
-	"version_id\x18\x03 \x01(\tR\tversionId\x12\x12\n" +
-	"\x04name\x18\x04 \x01(\tR\x04name\x12B\n" +
-	"\arequest\x18\x05 \x01(\v2(.metadata_lifecycle.v1.MonitoringRequestR\arequest\x12T\n" +
-	"\x0econtact_points\x18\x06 \x03(\v2-.metadata_lifecycle.v1.MonitoringContactPointR\rcontactPoints\"\x8a\x01\n" +
+	"version_id\x18\x01 \x01(\tR\tversionId\x12\x1f\n" +
+	"\vresource_id\x18\x02 \x01(\tR\n" +
+	"resourceId\x12\x12\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name\x12B\n" +
+	"\arequest\x18\x04 \x01(\v2(.metadata_lifecycle.v1.MonitoringRequestR\arequest\x12T\n" +
+	"\x0econtact_points\x18\x05 \x03(\v2-.metadata_lifecycle.v1.MonitoringContactPointR\rcontactPoints\"\x8a\x01\n" +
 	"\x0fMonitoringGroup\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12S\n" +

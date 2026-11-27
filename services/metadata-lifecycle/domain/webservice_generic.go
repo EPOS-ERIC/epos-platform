@@ -232,9 +232,44 @@ func (w GenericWebService) prepareHTTPRequest(parameters []DistributionAccessPar
 		values.supplied[formatParameterID] = true
 	}
 
-	parameterText, err := w.renderParameterText(values)
-	if err != nil {
-		return PreparedHTTPRequest{}, err
+	// Render parameter templates and serialize values before assembling the request.
+	parameterText := make(map[uuid.UUID][]string, len(w.Parameters))
+	for _, parameter := range w.Parameters {
+		items := values.resolved[parameter.ID]
+		if schema, ok := parameter.Schema.(TemplateSchema); ok {
+			rendered, err := values.renderTemplate(schema.Template, schema.Parameters, parameter.Required)
+			if err != nil {
+				return PreparedHTTPRequest{}, err
+			}
+
+			items = nil
+			if rendered != nil {
+				items = AccessArray{AccessString(*rendered)}
+			}
+		}
+
+		if items == nil {
+			if parameter.Required {
+				return PreparedHTTPRequest{}, apperror.Field("parameters", fmt.Sprintf("Required parameter %q (%s) is missing.", parameter.Name, parameter.ID), nil)
+			}
+
+			continue
+		}
+
+		text := make([]string, len(items))
+		for i, item := range items {
+			if item == nil {
+				return PreparedHTTPRequest{}, apperror.Default(apperror.CodeInternal)
+			}
+
+			text[i] = item.Text()
+		}
+
+		if !parameter.Location.Valid() {
+			return PreparedHTTPRequest{}, apperror.Default(apperror.CodeInternal)
+		}
+
+		parameterText[parameter.ID] = text
 	}
 
 	// Validate the template components so substitution cannot change the host or query.
@@ -337,42 +372,6 @@ func (w GenericWebService) prepareHTTPRequest(parameters []DistributionAccessPar
 	}
 
 	return request, nil
-}
-
-// renderParameterText resolves template output before request-specific assembly.
-func (w GenericWebService) renderParameterText(values accessValues) (map[uuid.UUID][]string, error) {
-	parameterText := make(map[uuid.UUID][]string, len(w.Parameters))
-	for _, parameter := range w.Parameters {
-		items := values.resolved[parameter.ID]
-		if schema, ok := parameter.Schema.(TemplateSchema); ok {
-			rendered, err := values.renderTemplate(schema.Template, schema.Parameters, parameter.Required)
-			if err != nil {
-				return nil, err
-			}
-			items = nil
-			if rendered != nil {
-				items = AccessArray{AccessString(*rendered)}
-			}
-		}
-		if items == nil {
-			if parameter.Required {
-				return nil, apperror.Field("parameters", fmt.Sprintf("Required parameter %q (%s) is missing.", parameter.Name, parameter.ID), nil)
-			}
-			continue
-		}
-		text := make([]string, len(items))
-		for i, item := range items {
-			if item == nil {
-				return nil, apperror.Default(apperror.CodeInternal)
-			}
-			text[i] = item.Text()
-		}
-		if !parameter.Location.Valid() {
-			return nil, apperror.Default(apperror.CodeInternal)
-		}
-		parameterText[parameter.ID] = text
-	}
-	return parameterText, nil
 }
 
 // selectAccessFormat checks that output_format is supported and returns the upstream
@@ -577,28 +576,15 @@ func (values accessValues) renderTemplate(source string, parameters []Parameter,
 		}
 	}
 
-	rendered, err := executeRequestTemplate(source, data)
-	if err != nil {
-		if _, ok := errors.AsType[template.ExecError](err); ok {
-			return nil, apperror.Field("parameters", "Template could not be rendered with supplied values.", err)
-		}
-
-		return nil, internalValidationError(err)
-	}
-
-	return &rendered, nil
-}
-
-func executeRequestTemplate(source string, data map[string]AccessScalar) (string, error) {
 	parsed, err := template.New("request").Option("missingkey=error").Parse(source)
 	if err != nil {
-		return "", err
+		return nil, internalValidationError(err)
 	}
 
 	var rendered strings.Builder
 	if err := parsed.Execute(&rendered, data); err != nil {
-		return "", err
+		return nil, apperror.Field("parameters", "Template could not be rendered with supplied values.", err)
 	}
 
-	return rendered.String(), nil
+	return new(rendered.String()), nil
 }

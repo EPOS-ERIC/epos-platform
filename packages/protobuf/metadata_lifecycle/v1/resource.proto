@@ -159,12 +159,11 @@ message MonitoringRequest {
 }
 
 message MonitoringDistribution {
-  string distribution_id = 1;
+  string version_id = 1;
   string resource_id = 2;
-  string version_id = 3;
-  string name = 4;
-  MonitoringRequest request = 5;
-  repeated MonitoringContactPoint contact_points = 6;
+  string name = 3;
+  MonitoringRequest request = 4;
+  repeated MonitoringContactPoint contact_points = 5;
 }
 
 message MonitoringGroup {

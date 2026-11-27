@@ -12,8 +12,6 @@ type MonitoringDistribution struct {
 	ConceptName   string
 	GroupID       uuid.UUID
 	GroupName     string
-	ResourceID    uuid.UUID
-	VersionID     uuid.UUID
 	Distribution  Distribution
 	ContactPoints []ContactPoint
 }
@@ -33,7 +31,6 @@ type MonitoringGroup struct {
 type MonitoringTarget struct {
 	ID            uuid.UUID
 	ResourceID    uuid.UUID
-	VersionID     uuid.UUID
 	Name          string
 	Request       PreparedHTTPRequest
 	ContactPoints []ContactPoint
