@@ -7396,12 +7396,15 @@ const (
 	GlobalPermissionGlobalMembershipManage    GlobalPermission = "global.membership.manage"
 	GlobalPermissionGlobalRoleManage          GlobalPermission = "global.role.manage"
 	GlobalPermissionGlobalPermissionManage    GlobalPermission = "global.permission.manage"
+	GlobalPermissionGlobalAdminManage         GlobalPermission = "global.admin.manage"
+	GlobalPermissionGlobalUserBlock           GlobalPermission = "global.user.block"
 	GlobalPermissionGlobalUserAPITokenRevoke  GlobalPermission = "global.user_api_token.revoke"
 	GlobalPermissionGlobalNotificationManage  GlobalPermission = "global.notification.manage"
 	GlobalPermissionGlobalOrganizationManage  GlobalPermission = "global.organization.manage"
 	GlobalPermissionGlobalContactPointManage  GlobalPermission = "global.contact_point.manage"
 	GlobalPermissionGlobalGroupManage         GlobalPermission = "global.group.manage"
 	GlobalPermissionGlobalConceptManage       GlobalPermission = "global.concept.manage"
+	GlobalPermissionGlobalResourceRead        GlobalPermission = "global.resource.read"
 	GlobalPermissionGlobalResourceCreate      GlobalPermission = "global.resource.create"
 	GlobalPermissionGlobalResourceEdit        GlobalPermission = "global.resource.edit"
 	GlobalPermissionGlobalResourceSubmit      GlobalPermission = "global.resource.submit"
@@ -7423,12 +7426,15 @@ func (GlobalPermission) AllValues() []GlobalPermission {
 		GlobalPermissionGlobalMembershipManage,
 		GlobalPermissionGlobalRoleManage,
 		GlobalPermissionGlobalPermissionManage,
+		GlobalPermissionGlobalAdminManage,
+		GlobalPermissionGlobalUserBlock,
 		GlobalPermissionGlobalUserAPITokenRevoke,
 		GlobalPermissionGlobalNotificationManage,
 		GlobalPermissionGlobalOrganizationManage,
 		GlobalPermissionGlobalContactPointManage,
 		GlobalPermissionGlobalGroupManage,
 		GlobalPermissionGlobalConceptManage,
+		GlobalPermissionGlobalResourceRead,
 		GlobalPermissionGlobalResourceCreate,
 		GlobalPermissionGlobalResourceEdit,
 		GlobalPermissionGlobalResourceSubmit,
@@ -7454,6 +7460,10 @@ func (s GlobalPermission) MarshalText() ([]byte, error) {
 		return []byte(s), nil
 	case GlobalPermissionGlobalPermissionManage:
 		return []byte(s), nil
+	case GlobalPermissionGlobalAdminManage:
+		return []byte(s), nil
+	case GlobalPermissionGlobalUserBlock:
+		return []byte(s), nil
 	case GlobalPermissionGlobalUserAPITokenRevoke:
 		return []byte(s), nil
 	case GlobalPermissionGlobalNotificationManage:
@@ -7465,6 +7475,8 @@ func (s GlobalPermission) MarshalText() ([]byte, error) {
 	case GlobalPermissionGlobalGroupManage:
 		return []byte(s), nil
 	case GlobalPermissionGlobalConceptManage:
+		return []byte(s), nil
+	case GlobalPermissionGlobalResourceRead:
 		return []byte(s), nil
 	case GlobalPermissionGlobalResourceCreate:
 		return []byte(s), nil
@@ -7509,6 +7521,12 @@ func (s *GlobalPermission) UnmarshalText(data []byte) error {
 	case GlobalPermissionGlobalPermissionManage:
 		*s = GlobalPermissionGlobalPermissionManage
 		return nil
+	case GlobalPermissionGlobalAdminManage:
+		*s = GlobalPermissionGlobalAdminManage
+		return nil
+	case GlobalPermissionGlobalUserBlock:
+		*s = GlobalPermissionGlobalUserBlock
+		return nil
 	case GlobalPermissionGlobalUserAPITokenRevoke:
 		*s = GlobalPermissionGlobalUserAPITokenRevoke
 		return nil
@@ -7526,6 +7544,9 @@ func (s *GlobalPermission) UnmarshalText(data []byte) error {
 		return nil
 	case GlobalPermissionGlobalConceptManage:
 		*s = GlobalPermissionGlobalConceptManage
+		return nil
+	case GlobalPermissionGlobalResourceRead:
+		*s = GlobalPermissionGlobalResourceRead
 		return nil
 	case GlobalPermissionGlobalResourceCreate:
 		*s = GlobalPermissionGlobalResourceCreate

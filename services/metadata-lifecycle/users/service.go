@@ -29,7 +29,6 @@ type Store interface {
 type Authorizer interface {
 	CanReadUser(context.Context, string, string) (domain.Result, error)
 	CanListUsers(context.Context, string) (domain.Result, error)
-	AuthorizeAdmin(context.Context, string) (domain.Result, error)
 	AuthorizeGlobal(context.Context, string, domain.GlobalPermission) (domain.Result, error)
 	AuthorizeActiveUser(context.Context, string) (domain.Result, error)
 }
@@ -176,7 +175,7 @@ func (s *Service) RevokeGlobalPermission(ctx context.Context, actorID, userID st
 }
 
 func (s *Service) AssignGlobalRole(ctx context.Context, actorID, userID, role string) ([]domain.Notification, error) {
-	allowed, err := s.authorizer.AuthorizeAdmin(ctx, actorID)
+	allowed, err := s.authorizer.AuthorizeGlobal(ctx, actorID, domain.GlobalPermissionAdminManage)
 	if err != nil {
 		return nil, fmt.Errorf("authorize global role assignment: %w", err)
 	}
@@ -207,7 +206,8 @@ func (s *Service) AssignGlobalRole(ctx context.Context, actorID, userID, role st
 }
 
 func (s *Service) RemoveGlobalRole(ctx context.Context, actorID, userID, role string) error {
-	allowed, err := s.authorizer.AuthorizeAdmin(ctx, actorID)
+	// the only global role as of now is ADMIN
+	allowed, err := s.authorizer.AuthorizeGlobal(ctx, actorID, domain.GlobalPermissionAdminManage)
 	if err != nil {
 		return fmt.Errorf("authorize global role removal: %w", err)
 	}
@@ -224,7 +224,7 @@ func (s *Service) RemoveGlobalRole(ctx context.Context, actorID, userID, role st
 }
 
 func (s *Service) BlockUser(ctx context.Context, actorID, userID, reason string) error {
-	allowed, err := s.authorizer.AuthorizeAdmin(ctx, actorID)
+	allowed, err := s.authorizer.AuthorizeGlobal(ctx, actorID, domain.GlobalPermissionUserBlock)
 	if err != nil {
 		return fmt.Errorf("authorize user blocking: %w", err)
 	}
@@ -241,7 +241,7 @@ func (s *Service) BlockUser(ctx context.Context, actorID, userID, reason string)
 }
 
 func (s *Service) UnblockUser(ctx context.Context, actorID, userID string) error {
-	allowed, err := s.authorizer.AuthorizeAdmin(ctx, actorID)
+	allowed, err := s.authorizer.AuthorizeGlobal(ctx, actorID, domain.GlobalPermissionUserBlock)
 	if err != nil {
 		return fmt.Errorf("authorize user unblocking: %w", err)
 	}

@@ -293,27 +293,30 @@ func TestCanReadPublishedResourceWithoutUser(t *testing.T) {
 	}
 }
 
-func TestCanReadContactPointRequiresMembershipOrAdmin(t *testing.T) {
+func TestCanReadContactPointRequiresMembershipOrGlobalRead(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 	userID := "user-1"
 
 	for _, test := range []struct {
 		name    string
-		admin   bool
+		read    bool
 		member  bool
 		allowed bool
 	}{
 		{name: "no membership", allowed: false},
 		{name: "active member", member: true, allowed: true},
-		{name: "global admin", admin: true, allowed: true},
+		{name: "global read", read: true, allowed: true},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			result, err := New(slog.Default(), fakeRepository{
+			repository := fakeRepository{
 				user:      domain.AuthorizationUser{Status: domain.UserStatusActive},
-				admin:     test.admin,
 				anyMember: test.member,
-			}).CanReadContactPoint(ctx, userID)
+			}
+			if test.read {
+				repository.globalPermission = domain.GlobalPermissionResourceRead
+			}
+			result, err := New(slog.Default(), repository).CanReadContactPoint(ctx, userID)
 			if err != nil {
 				t.Fatalf("read contact point: %v", err)
 			}
@@ -352,7 +355,7 @@ func TestAuthorizeDiscoveryPreservesVersionVisibilityRules(t *testing.T) {
 	}
 }
 
-func TestAuthorizeDiscoveryUsesGlobalAdminFromAuthorizationUser(t *testing.T) {
+func TestAuthorizeDiscoveryUsesGlobalReadPermission(t *testing.T) {
 	t.Parallel()
 	groupID := uuid.New()
 	candidate := domain.DiscoveryCandidate{
@@ -365,11 +368,8 @@ func TestAuthorizeDiscoveryUsesGlobalAdminFromAuthorizationUser(t *testing.T) {
 	}
 	actor := "admin"
 	result, err := New(slog.Default(), fakeRepository{
-		user: domain.AuthorizationUser{
-			ID:          actor,
-			Status:      domain.UserStatusActive,
-			GlobalAdmin: true,
-		},
+		user:             domain.AuthorizationUser{ID: actor, Status: domain.UserStatusActive},
+		globalPermission: domain.GlobalPermissionResourceRead,
 	}).AuthorizeDiscovery(context.Background(), &actor, []domain.DiscoveryCandidate{candidate})
 	if err != nil {
 		t.Fatalf("authorize discovery: %v", err)
@@ -379,6 +379,57 @@ func TestAuthorizeDiscoveryUsesGlobalAdminFromAuthorizationUser(t *testing.T) {
 	}
 	if _, ok := result.CreatedByGroupIDs[groupID]; !ok {
 		t.Fatalf("created-by groups = %#v, want %s", result.CreatedByGroupIDs, groupID)
+	}
+}
+
+func TestGlobalResourceReadScope(t *testing.T) {
+	groupID := uuid.New()
+	actor := "reader"
+	for _, tc := range []struct {
+		name    string
+		status  domain.UserStatus
+		grant   bool
+		allowed bool
+	}{
+		{name: "granted", status: domain.UserStatusActive, grant: true, allowed: true},
+		{name: "no grant", status: domain.UserStatusActive},
+		{name: "blocked", status: domain.UserStatusBlocked, grant: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			repo := fakeRepository{
+				user:         domain.AuthorizationUser{ID: actor, Status: tc.status},
+				datasetGroup: groupID,
+			}
+			if tc.grant {
+				repo.globalPermission = domain.GlobalPermissionResourceRead
+			}
+			a := New(slog.Default(), repo)
+			ctx := context.Background()
+			for name, check := range map[string]func() (domain.Result, error){
+				"version": func() (domain.Result, error) { return a.CanReadDatasetVersion(ctx, &actor, uuid.New(), uuid.New()) },
+				"versions": func() (domain.Result, error) {
+					return a.CanReadResourceVersions(ctx, actor, domain.Dataset, uuid.New())
+				},
+				"contact": func() (domain.Result, error) { return a.CanReadContactPoint(ctx, actor) },
+			} {
+				got, err := check()
+				if err != nil || got.Allowed != tc.allowed {
+					t.Errorf("%s: result = %#v, error = %v, want allowed %t", name, got, err, tc.allowed)
+				}
+			}
+			roster, err := a.CanListGroupMemberships(ctx, actor, groupID)
+			if err != nil || roster.Allowed {
+				t.Errorf("roster: result = %#v, error = %v, want denied", roster, err)
+			}
+			directory, err := a.CanListUsers(ctx, actor)
+			if err != nil || directory.Allowed {
+				t.Errorf("directory: result = %#v, error = %v, want denied", directory, err)
+			}
+			discovery, err := a.AuthorizeDiscovery(ctx, &actor, []domain.DiscoveryCandidate{{Type: domain.Dataset, GroupID: groupID, Status: domain.Draft}})
+			if err != nil || (len(discovery.AllowedCandidates) == 1) != tc.allowed {
+				t.Errorf("discovery: result = %#v, error = %v, want allowed %t", discovery, err, tc.allowed)
+			}
+		})
 	}
 }
 
