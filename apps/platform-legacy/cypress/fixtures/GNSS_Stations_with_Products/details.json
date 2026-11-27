@@ -27,93 +27,89 @@
             "id": "2f96f31e-5c82-46e1-877f-be595f68cd86",
             "name": "UBI - University of Beira Interior"
           },
-          "configuration": {
-            "type": "HTTP",
-            "template_url": "https://gnssproducts.epos.ubi.pt/GlassFramework/webresources/stations/v2/station/bbox/{minLon}/{minLat}/{maxLon}/{maxLat}?with=2",
-            "method": "GET",
-            "format": "application/epos.geo+json",
-            "parameters": [
-              {
-                "id": "1a5dd863-9dc7-5a5a-a072-783e9bd3bad8",
-                "kind": "FLOAT",
-                "position": 0,
-                "name": "minLon",
-                "label": "minLon",
-                "required": true,
-                "read_only": false,
-                "location": "PATH",
-                "explode": false,
-                "default": -25.664,
-                "minimum": -180.0,
-                "maximum": 180.0,
-                "property": "epos:westernmostLongitude",
-                "role": "MIN_LON",
-                "multiple_values": false
-              },
-              {
-                "id": "4b535954-cb36-5b8e-92ba-cd023fd724c2",
-                "kind": "FLOAT",
-                "position": 1,
-                "name": "maxLat",
-                "label": "maxLat",
-                "required": true,
-                "read_only": false,
-                "location": "PATH",
-                "explode": false,
-                "default": 68.0075,
-                "minimum": -9.0,
-                "maximum": 90.0,
-                "property": "epos:northernmostLatitude",
-                "role": "MAX_LAT",
-                "multiple_values": false
-              },
-              {
-                "id": "c8f489d9-061c-596a-92d7-cb6b30cbbf91",
-                "kind": "FLOAT",
-                "position": 2,
-                "name": "maxLon",
-                "label": "maxLon",
-                "required": true,
-                "read_only": false,
-                "location": "PATH",
-                "explode": false,
-                "default": 27.07,
-                "minimum": -180.0,
-                "maximum": 180.0,
-                "property": "epos:easternmostLongitude",
-                "role": "MAX_LON",
-                "multiple_values": false
-              },
-              {
-                "id": "b8902ef0-a608-522c-ad05-bef53319975f",
-                "kind": "FLOAT",
-                "position": 3,
-                "name": "minLat",
-                "label": "minLat",
-                "required": true,
-                "read_only": false,
-                "location": "PATH",
-                "explode": false,
-                "default": 35.60371874069731,
-                "minimum": -90.0,
-                "maximum": 90.0,
-                "property": "epos:southernmostLatitude",
-                "role": "MIN_LAT",
-                "multiple_values": false
-              }
-            ]
-          },
-          "documentation": {
-            "uri": "https://gnss-epos.eu/ics-tcs/"
-          }
-        },
-        "available_formats": [
-          {
-            "kind": "ORIGINAL",
-            "output_format": "application/epos.geo+json",
-            "label": "GEOJSON"
-          }
-        ]
+          "type": "HTTP",
+          "template_url": "https://gnssproducts.epos.ubi.pt/GlassFramework/webresources/stations/v2/station/bbox/{minLon}/{minLat}/{maxLon}/{maxLat}?with=2",
+          "method": "GET",
+          "format": "application/epos.geo+json",
+          "parameters": [
+            {
+              "id": "1a5dd863-9dc7-5a5a-a072-783e9bd3bad8",
+              "kind": "FLOAT",
+              "position": 0,
+              "name": "minLon",
+              "label": "minLon",
+              "required": true,
+              "read_only": false,
+              "location": "PATH",
+              "explode": false,
+              "default": -25.664,
+              "minimum": -180.0,
+              "maximum": 180.0,
+              "property": "epos:westernmostLongitude",
+              "role": "MIN_LON",
+              "multiple_values": false
+            },
+            {
+              "id": "4b535954-cb36-5b8e-92ba-cd023fd724c2",
+              "kind": "FLOAT",
+              "position": 1,
+              "name": "maxLat",
+              "label": "maxLat",
+              "required": true,
+              "read_only": false,
+              "location": "PATH",
+              "explode": false,
+              "default": 68.0075,
+              "minimum": -9.0,
+              "maximum": 90.0,
+              "property": "epos:northernmostLatitude",
+              "role": "MAX_LAT",
+              "multiple_values": false
+            },
+            {
+              "id": "c8f489d9-061c-596a-92d7-cb6b30cbbf91",
+              "kind": "FLOAT",
+              "position": 2,
+              "name": "maxLon",
+              "label": "maxLon",
+              "required": true,
+              "read_only": false,
+              "location": "PATH",
+              "explode": false,
+              "default": 27.07,
+              "minimum": -180.0,
+              "maximum": 180.0,
+              "property": "epos:easternmostLongitude",
+              "role": "MAX_LON",
+              "multiple_values": false
+            },
+            {
+              "id": "b8902ef0-a608-522c-ad05-bef53319975f",
+              "kind": "FLOAT",
+              "position": 3,
+              "name": "minLat",
+              "label": "minLat",
+              "required": true,
+              "read_only": false,
+              "location": "PATH",
+              "explode": false,
+              "default": 35.60371874069731,
+              "minimum": -90.0,
+              "maximum": 90.0,
+              "property": "epos:southernmostLatitude",
+              "role": "MIN_LAT",
+              "multiple_values": false
+            }
+          ],
+          "documentation_uri": "https://gnss-epos.eu/ics-tcs/",
+          "available_formats": [
+            {
+              "kind": "ORIGINAL",
+              "output_format": "application/epos.geo+json",
+              "label": "GEOJSON"
+            }
+          ]
+        }
       }
     ],
     "categories": [

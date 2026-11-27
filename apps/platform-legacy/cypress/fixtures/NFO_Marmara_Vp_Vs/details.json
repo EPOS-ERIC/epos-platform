@@ -27,573 +27,569 @@
             "id": "6824b1c3-5e25-4509-895f-7a9ca67cf8fc",
             "name": "KOERI - Kandilli Observatory and Earthquake Research Institute"
           },
-          "configuration": {
-            "type": "HTTP",
-            "template_url": "https://toros.boun.edu.tr/nfo_marsite/vpvs/query",
-            "method": "GET",
-            "format": "application/json",
-            "parameters": [
-              {
-                "id": "4dce22de-8167-549b-8ffd-564081ce6437",
-                "kind": "INTEGER",
-                "position": 0,
-                "name": "minps",
-                "label": "Number of P and S couples per earthquake",
-                "required": true,
-                "read_only": false,
-                "location": "QUERY",
-                "explode": false,
-                "default": 4,
-                "multiple_values": false
-              },
-              {
-                "id": "af0f1a7f-a34c-5d2f-97ac-35da2fc6b7b3",
-                "kind": "STRING",
-                "position": 1,
-                "name": "stacode",
-                "label": "Station code",
-                "required": true,
-                "read_only": false,
-                "location": "QUERY",
-                "explode": false,
-                "default": "ADVT",
-                "enum": [
-                  {
-                    "value": "OSMT"
-                  },
-                  {
-                    "value": "YKBL"
-                  },
-                  {
-                    "value": "KUMB"
-                  },
-                  {
-                    "value": "ORLT"
-                  },
-                  {
-                    "value": "COMU"
-                  },
-                  {
-                    "value": "SIMA"
-                  },
-                  {
-                    "value": "LAFA"
-                  },
-                  {
-                    "value": "ENZZ"
-                  },
-                  {
-                    "value": "CTKS"
-                  },
-                  {
-                    "value": "MDNY"
-                  },
-                  {
-                    "value": "KCTX"
-                  },
-                  {
-                    "value": "BOTS"
-                  },
-                  {
-                    "value": "KAVV"
-                  },
-                  {
-                    "value": "ADVT"
-                  },
-                  {
-                    "value": "TUZL"
-                  },
-                  {
-                    "value": "BGKT"
-                  },
-                  {
-                    "value": "ESKY"
-                  },
-                  {
-                    "value": "EZNE"
-                  },
-                  {
-                    "value": "GONE"
-                  },
-                  {
-                    "value": "TVSB"
-                  },
-                  {
-                    "value": "CANM"
-                  },
-                  {
-                    "value": "BUYA"
-                  },
-                  {
-                    "value": "KLYT"
-                  },
-                  {
-                    "value": "GELI"
-                  },
-                  {
-                    "value": "ISK"
-                  },
-                  {
-                    "value": "DST"
-                  },
-                  {
-                    "value": "HRTX"
-                  },
-                  {
-                    "value": "YENI"
-                  },
-                  {
-                    "value": "SRCK"
-                  },
-                  {
-                    "value": "ALT"
-                  },
-                  {
-                    "value": "RKY"
-                  },
-                  {
-                    "value": "SUSR"
-                  },
-                  {
-                    "value": "CRLT"
-                  },
-                  {
-                    "value": "BALB"
-                  },
-                  {
-                    "value": "SHAP"
-                  },
-                  {
-                    "value": "UVEZ"
-                  },
-                  {
-                    "value": "MAEG"
-                  },
-                  {
-                    "value": "HYBA"
-                  },
-                  {
-                    "value": "BOZC"
-                  },
-                  {
-                    "value": "GEML"
-                  },
-                  {
-                    "value": "GEMT"
-                  },
-                  {
-                    "value": "GPNR"
-                  },
-                  {
-                    "value": "YLV"
-                  },
-                  {
-                    "value": "KOUK"
-                  },
-                  {
-                    "value": "CAVI"
-                  },
-                  {
-                    "value": "YLVH"
-                  },
-                  {
-                    "value": "GUZE"
-                  },
-                  {
-                    "value": "TKR"
-                  },
-                  {
-                    "value": "CTYL"
-                  },
-                  {
-                    "value": "SILT"
-                  },
-                  {
-                    "value": "BRGA"
-                  },
-                  {
-                    "value": "GAZK"
-                  },
-                  {
-                    "value": "SOMA"
-                  },
-                  {
-                    "value": "AVCI"
-                  },
-                  {
-                    "value": "SINB"
-                  },
-                  {
-                    "value": "SLVT"
-                  },
-                  {
-                    "value": "SAUV"
-                  },
-                  {
-                    "value": "EZN"
-                  },
-                  {
-                    "value": "YAYO"
-                  },
-                  {
-                    "value": "EDRB"
-                  },
-                  {
-                    "value": "KRBG"
-                  },
-                  {
-                    "value": "EDC"
-                  },
-                  {
-                    "value": "ENEZ"
-                  },
-                  {
-                    "value": "GPA"
-                  },
-                  {
-                    "value": "GEDZ"
-                  },
-                  {
-                    "value": "ARMT"
-                  },
-                  {
-                    "value": "ERIK"
-                  },
-                  {
-                    "value": "BIGA"
-                  },
-                  {
-                    "value": "MRMT"
-                  },
-                  {
-                    "value": "IZI"
-                  },
-                  {
-                    "value": "HVHR"
-                  },
-                  {
-                    "value": "DKL"
-                  },
-                  {
-                    "value": "LAP"
-                  },
-                  {
-                    "value": "UKOP"
-                  },
-                  {
-                    "value": "GULT"
-                  },
-                  {
-                    "value": "LAPK"
-                  },
-                  {
-                    "value": "SMAA"
-                  }
-                ],
-                "multiple_values": false
-              },
-              {
-                "id": "ea82aa20-32f1-5d3e-834e-20a7f30f6d9c",
-                "kind": "FLOAT",
-                "position": 2,
-                "name": "maxherr",
-                "label": "Maximum allowed formal horizontal error in earthquake location",
-                "required": true,
-                "read_only": false,
-                "location": "QUERY",
-                "explode": false,
-                "default": 300.0,
-                "minimum": 0.0,
-                "maximum": 40000.0,
-                "multiple_values": false
-              },
-              {
-                "id": "c95027c1-687f-52ce-a5b4-36036dc8ae16",
-                "kind": "FLOAT",
-                "position": 3,
-                "name": "maxverr",
-                "label": "Maximum allowed formal vertical error in earthquake location",
-                "required": true,
-                "read_only": false,
-                "location": "QUERY",
-                "explode": false,
-                "default": 200.0,
-                "minimum": 0.0,
-                "maximum": 6378.0,
-                "multiple_values": false
-              },
-              {
-                "id": "926c12ad-8c32-5bc9-8e34-ac1170a3a48a",
-                "kind": "FLOAT",
-                "position": 4,
-                "name": "maxeqdep",
-                "label": "Maximum Earhquake Depth",
-                "required": true,
-                "read_only": false,
-                "location": "QUERY",
-                "explode": false,
-                "default": 25.0,
-                "minimum": -1.0,
-                "maximum": 100.0,
-                "multiple_values": false
-              },
-              {
-                "id": "96b295ff-7b1f-521f-9d3c-5594423df161",
-                "kind": "INTEGER",
-                "position": 5,
-                "name": "maxvpvspw",
-                "label": "Maximum quality weight allowed for a p-wave reading",
-                "required": false,
-                "read_only": false,
-                "location": "QUERY",
-                "explode": false,
-                "default": 3,
-                "minimum": 0,
-                "maximum": 4,
-                "multiple_values": false
-              },
-              {
-                "id": "df1e169a-9203-57e5-98cd-e9b700de769d",
-                "kind": "INTEGER",
-                "position": 6,
-                "name": "maxpw",
-                "label": "P-phase onset Hypoinverse standard quality weight",
-                "required": true,
-                "read_only": false,
-                "location": "QUERY",
-                "explode": false,
-                "default": 4,
-                "maximum": 4,
-                "multiple_values": false
-              },
-              {
-                "id": "da3bf875-6ac4-5cc8-b639-bf1caba592cb",
-                "kind": "DATETIME",
-                "position": 7,
-                "name": "maxtime",
-                "label": "Maximum Time",
-                "required": true,
-                "read_only": false,
-                "location": "QUERY",
-                "explode": false,
-                "default": "2023-04-01T00:00:00.000Z",
-                "minimum": "2017-01-01T00:00:00.000Z",
-                "property": "schema:endDate",
-                "layout": "YYYY-MM-DDThh:mm:ss.SSSZ",
-                "role": "END_DATE",
-                "multiple_values": false
-              },
-              {
-                "id": "072265e8-ffa8-5680-99d5-f7e702649ac7",
-                "kind": "INTEGER",
-                "position": 8,
-                "name": "maxsw",
-                "label": "S-phase onset Hypoinverse standard quality weight",
-                "required": true,
-                "read_only": false,
-                "location": "QUERY",
-                "explode": false,
-                "default": 4,
-                "maximum": 4,
-                "multiple_values": false
-              },
-              {
-                "id": "64322ced-bbfb-5b75-87aa-20d674bb984c",
-                "kind": "FLOAT",
-                "position": 9,
-                "name": "midi",
-                "label": "Horizontal distance of the closest station from a earthquake",
-                "required": true,
-                "read_only": false,
-                "location": "QUERY",
-                "explode": false,
-                "default": 70.0,
-                "minimum": 0.0,
-                "maximum": 40000.0,
-                "multiple_values": false
-              },
-              {
-                "id": "189953a2-227b-5a2f-916a-3b47a46d6546",
-                "kind": "FLOAT",
-                "position": 10,
-                "name": "maxlon",
-                "label": "Maximum Longitude",
-                "required": true,
-                "read_only": false,
-                "location": "QUERY",
-                "explode": false,
-                "default": 31.0,
-                "minimum": -90.0,
-                "maximum": 90.0,
-                "property": "epos:easternmostLongitude",
-                "role": "MAX_LON",
-                "multiple_values": false
-              },
-              {
-                "id": "6475d61f-2a55-59a9-bc26-0908cbdb3bae",
-                "kind": "FLOAT",
-                "position": 11,
-                "name": "mineqdep",
-                "label": "Minimum Earthquake Depth",
-                "required": true,
-                "read_only": false,
-                "location": "QUERY",
-                "explode": false,
-                "default": 0.4,
-                "minimum": -1.0,
-                "maximum": 100.0,
-                "multiple_values": false
-              },
-              {
-                "id": "00f19a72-9e70-5742-be15-16588684c65d",
-                "kind": "INTEGER",
-                "position": 12,
-                "name": "minns",
-                "label": "Number of s-waves onset observations",
-                "required": true,
-                "read_only": false,
-                "location": "QUERY",
-                "explode": false,
-                "default": 3,
-                "multiple_values": false
-              },
-              {
-                "id": "4cef0a94-562e-53f6-9a9b-3637e9b2ac28",
-                "kind": "FLOAT",
-                "position": 13,
-                "name": "minlon",
-                "label": "Minimum Longitude",
-                "required": true,
-                "read_only": false,
-                "location": "QUERY",
-                "explode": false,
-                "default": 26.0,
-                "minimum": -90.0,
-                "maximum": 90.0,
-                "property": "epos:westernmostLongitude",
-                "role": "MIN_LON",
-                "multiple_values": false
-              },
-              {
-                "id": "fd0cf3e6-fbe6-5788-99ac-cdbc58890312",
-                "kind": "FLOAT",
-                "position": 14,
-                "name": "minlat",
-                "label": "Minimum Latitude",
-                "required": true,
-                "read_only": false,
-                "location": "QUERY",
-                "explode": false,
-                "default": 39.0,
-                "minimum": -90.0,
-                "maximum": 90.0,
-                "property": "epos:southernmostLatitude",
-                "role": "MIN_LAT",
-                "multiple_values": false
-              },
-              {
-                "id": "bf01e096-b893-53bb-86a7-9ed8fee6dc53",
-                "kind": "FLOAT",
-                "position": 15,
-                "name": "maxlat",
-                "label": "Maximum Latitude",
-                "required": true,
-                "read_only": false,
-                "location": "QUERY",
-                "explode": false,
-                "default": 42.0,
-                "minimum": -90.0,
-                "maximum": 90.0,
-                "property": "epos:northernmostLatitude",
-                "role": "MAX_LAT",
-                "multiple_values": false
-              },
-              {
-                "id": "556d69e4-3905-5481-89b9-c087d43f97b5",
-                "kind": "INTEGER",
-                "position": 16,
-                "name": "maxgap",
-                "label": "Degrees of azimuthal stations distribution gap per earthquake",
-                "required": true,
-                "read_only": false,
-                "location": "QUERY",
-                "explode": false,
-                "default": 150,
-                "maximum": 360,
-                "multiple_values": false
-              },
-              {
-                "id": "db3bddaf-f918-593a-848e-9ec3dc09eb8c",
-                "kind": "INTEGER",
-                "position": 17,
-                "name": "maxvpvssw",
-                "label": "Maximum quality weight allowed for a s-wave reading",
-                "required": false,
-                "read_only": false,
-                "location": "QUERY",
-                "explode": false,
-                "default": 3,
-                "minimum": 0,
-                "maximum": 4,
-                "multiple_values": false
-              },
-              {
-                "id": "930ee5e3-ef70-5bf7-8a19-84a0d013dea8",
-                "kind": "INTEGER",
-                "position": 18,
-                "name": "minnp",
-                "label": "Number of p-waves onset observations",
-                "required": true,
-                "read_only": false,
-                "location": "QUERY",
-                "explode": false,
-                "default": 2,
-                "multiple_values": false
-              },
-              {
-                "id": "8eae12c2-6250-51db-8724-c1b1f74f3de5",
-                "kind": "DATETIME",
-                "position": 19,
-                "name": "mintime",
-                "label": "Minimum Time",
-                "required": true,
-                "read_only": false,
-                "location": "QUERY",
-                "explode": false,
-                "default": "2017-01-01T00:00:00.000Z",
-                "minimum": "2017-01-01T00:00:00.000Z",
-                "property": "schema:startDate",
-                "layout": "YYYY-MM-DDThh:mm:ss.SSSZ",
-                "role": "START_DATE",
-                "multiple_values": false
-              }
-            ]
-          },
+          "type": "HTTP",
+          "template_url": "https://toros.boun.edu.tr/nfo_marsite/vpvs/query",
+          "method": "GET",
+          "format": "application/json",
+          "parameters": [
+            {
+              "id": "4dce22de-8167-549b-8ffd-564081ce6437",
+              "kind": "INTEGER",
+              "position": 0,
+              "name": "minps",
+              "label": "Number of P and S couples per earthquake",
+              "required": true,
+              "read_only": false,
+              "location": "QUERY",
+              "explode": false,
+              "default": 4,
+              "multiple_values": false
+            },
+            {
+              "id": "af0f1a7f-a34c-5d2f-97ac-35da2fc6b7b3",
+              "kind": "STRING",
+              "position": 1,
+              "name": "stacode",
+              "label": "Station code",
+              "required": true,
+              "read_only": false,
+              "location": "QUERY",
+              "explode": false,
+              "default": "ADVT",
+              "enum": [
+                {
+                  "value": "OSMT"
+                },
+                {
+                  "value": "YKBL"
+                },
+                {
+                  "value": "KUMB"
+                },
+                {
+                  "value": "ORLT"
+                },
+                {
+                  "value": "COMU"
+                },
+                {
+                  "value": "SIMA"
+                },
+                {
+                  "value": "LAFA"
+                },
+                {
+                  "value": "ENZZ"
+                },
+                {
+                  "value": "CTKS"
+                },
+                {
+                  "value": "MDNY"
+                },
+                {
+                  "value": "KCTX"
+                },
+                {
+                  "value": "BOTS"
+                },
+                {
+                  "value": "KAVV"
+                },
+                {
+                  "value": "ADVT"
+                },
+                {
+                  "value": "TUZL"
+                },
+                {
+                  "value": "BGKT"
+                },
+                {
+                  "value": "ESKY"
+                },
+                {
+                  "value": "EZNE"
+                },
+                {
+                  "value": "GONE"
+                },
+                {
+                  "value": "TVSB"
+                },
+                {
+                  "value": "CANM"
+                },
+                {
+                  "value": "BUYA"
+                },
+                {
+                  "value": "KLYT"
+                },
+                {
+                  "value": "GELI"
+                },
+                {
+                  "value": "ISK"
+                },
+                {
+                  "value": "DST"
+                },
+                {
+                  "value": "HRTX"
+                },
+                {
+                  "value": "YENI"
+                },
+                {
+                  "value": "SRCK"
+                },
+                {
+                  "value": "ALT"
+                },
+                {
+                  "value": "RKY"
+                },
+                {
+                  "value": "SUSR"
+                },
+                {
+                  "value": "CRLT"
+                },
+                {
+                  "value": "BALB"
+                },
+                {
+                  "value": "SHAP"
+                },
+                {
+                  "value": "UVEZ"
+                },
+                {
+                  "value": "MAEG"
+                },
+                {
+                  "value": "HYBA"
+                },
+                {
+                  "value": "BOZC"
+                },
+                {
+                  "value": "GEML"
+                },
+                {
+                  "value": "GEMT"
+                },
+                {
+                  "value": "GPNR"
+                },
+                {
+                  "value": "YLV"
+                },
+                {
+                  "value": "KOUK"
+                },
+                {
+                  "value": "CAVI"
+                },
+                {
+                  "value": "YLVH"
+                },
+                {
+                  "value": "GUZE"
+                },
+                {
+                  "value": "TKR"
+                },
+                {
+                  "value": "CTYL"
+                },
+                {
+                  "value": "SILT"
+                },
+                {
+                  "value": "BRGA"
+                },
+                {
+                  "value": "GAZK"
+                },
+                {
+                  "value": "SOMA"
+                },
+                {
+                  "value": "AVCI"
+                },
+                {
+                  "value": "SINB"
+                },
+                {
+                  "value": "SLVT"
+                },
+                {
+                  "value": "SAUV"
+                },
+                {
+                  "value": "EZN"
+                },
+                {
+                  "value": "YAYO"
+                },
+                {
+                  "value": "EDRB"
+                },
+                {
+                  "value": "KRBG"
+                },
+                {
+                  "value": "EDC"
+                },
+                {
+                  "value": "ENEZ"
+                },
+                {
+                  "value": "GPA"
+                },
+                {
+                  "value": "GEDZ"
+                },
+                {
+                  "value": "ARMT"
+                },
+                {
+                  "value": "ERIK"
+                },
+                {
+                  "value": "BIGA"
+                },
+                {
+                  "value": "MRMT"
+                },
+                {
+                  "value": "IZI"
+                },
+                {
+                  "value": "HVHR"
+                },
+                {
+                  "value": "DKL"
+                },
+                {
+                  "value": "LAP"
+                },
+                {
+                  "value": "UKOP"
+                },
+                {
+                  "value": "GULT"
+                },
+                {
+                  "value": "LAPK"
+                },
+                {
+                  "value": "SMAA"
+                }
+              ],
+              "multiple_values": false
+            },
+            {
+              "id": "ea82aa20-32f1-5d3e-834e-20a7f30f6d9c",
+              "kind": "FLOAT",
+              "position": 2,
+              "name": "maxherr",
+              "label": "Maximum allowed formal horizontal error in earthquake location",
+              "required": true,
+              "read_only": false,
+              "location": "QUERY",
+              "explode": false,
+              "default": 300.0,
+              "minimum": 0.0,
+              "maximum": 40000.0,
+              "multiple_values": false
+            },
+            {
+              "id": "c95027c1-687f-52ce-a5b4-36036dc8ae16",
+              "kind": "FLOAT",
+              "position": 3,
+              "name": "maxverr",
+              "label": "Maximum allowed formal vertical error in earthquake location",
+              "required": true,
+              "read_only": false,
+              "location": "QUERY",
+              "explode": false,
+              "default": 200.0,
+              "minimum": 0.0,
+              "maximum": 6378.0,
+              "multiple_values": false
+            },
+            {
+              "id": "926c12ad-8c32-5bc9-8e34-ac1170a3a48a",
+              "kind": "FLOAT",
+              "position": 4,
+              "name": "maxeqdep",
+              "label": "Maximum Earhquake Depth",
+              "required": true,
+              "read_only": false,
+              "location": "QUERY",
+              "explode": false,
+              "default": 25.0,
+              "minimum": -1.0,
+              "maximum": 100.0,
+              "multiple_values": false
+            },
+            {
+              "id": "96b295ff-7b1f-521f-9d3c-5594423df161",
+              "kind": "INTEGER",
+              "position": 5,
+              "name": "maxvpvspw",
+              "label": "Maximum quality weight allowed for a p-wave reading",
+              "required": false,
+              "read_only": false,
+              "location": "QUERY",
+              "explode": false,
+              "default": 3,
+              "minimum": 0,
+              "maximum": 4,
+              "multiple_values": false
+            },
+            {
+              "id": "df1e169a-9203-57e5-98cd-e9b700de769d",
+              "kind": "INTEGER",
+              "position": 6,
+              "name": "maxpw",
+              "label": "P-phase onset Hypoinverse standard quality weight",
+              "required": true,
+              "read_only": false,
+              "location": "QUERY",
+              "explode": false,
+              "default": 4,
+              "maximum": 4,
+              "multiple_values": false
+            },
+            {
+              "id": "da3bf875-6ac4-5cc8-b639-bf1caba592cb",
+              "kind": "DATETIME",
+              "position": 7,
+              "name": "maxtime",
+              "label": "Maximum Time",
+              "required": true,
+              "read_only": false,
+              "location": "QUERY",
+              "explode": false,
+              "default": "2023-04-01T00:00:00.000Z",
+              "minimum": "2017-01-01T00:00:00.000Z",
+              "property": "schema:endDate",
+              "layout": "YYYY-MM-DDThh:mm:ss.SSSZ",
+              "role": "END_DATE",
+              "multiple_values": false
+            },
+            {
+              "id": "072265e8-ffa8-5680-99d5-f7e702649ac7",
+              "kind": "INTEGER",
+              "position": 8,
+              "name": "maxsw",
+              "label": "S-phase onset Hypoinverse standard quality weight",
+              "required": true,
+              "read_only": false,
+              "location": "QUERY",
+              "explode": false,
+              "default": 4,
+              "maximum": 4,
+              "multiple_values": false
+            },
+            {
+              "id": "64322ced-bbfb-5b75-87aa-20d674bb984c",
+              "kind": "FLOAT",
+              "position": 9,
+              "name": "midi",
+              "label": "Horizontal distance of the closest station from a earthquake",
+              "required": true,
+              "read_only": false,
+              "location": "QUERY",
+              "explode": false,
+              "default": 70.0,
+              "minimum": 0.0,
+              "maximum": 40000.0,
+              "multiple_values": false
+            },
+            {
+              "id": "189953a2-227b-5a2f-916a-3b47a46d6546",
+              "kind": "FLOAT",
+              "position": 10,
+              "name": "maxlon",
+              "label": "Maximum Longitude",
+              "required": true,
+              "read_only": false,
+              "location": "QUERY",
+              "explode": false,
+              "default": 31.0,
+              "minimum": -90.0,
+              "maximum": 90.0,
+              "property": "epos:easternmostLongitude",
+              "role": "MAX_LON",
+              "multiple_values": false
+            },
+            {
+              "id": "6475d61f-2a55-59a9-bc26-0908cbdb3bae",
+              "kind": "FLOAT",
+              "position": 11,
+              "name": "mineqdep",
+              "label": "Minimum Earthquake Depth",
+              "required": true,
+              "read_only": false,
+              "location": "QUERY",
+              "explode": false,
+              "default": 0.4,
+              "minimum": -1.0,
+              "maximum": 100.0,
+              "multiple_values": false
+            },
+            {
+              "id": "00f19a72-9e70-5742-be15-16588684c65d",
+              "kind": "INTEGER",
+              "position": 12,
+              "name": "minns",
+              "label": "Number of s-waves onset observations",
+              "required": true,
+              "read_only": false,
+              "location": "QUERY",
+              "explode": false,
+              "default": 3,
+              "multiple_values": false
+            },
+            {
+              "id": "4cef0a94-562e-53f6-9a9b-3637e9b2ac28",
+              "kind": "FLOAT",
+              "position": 13,
+              "name": "minlon",
+              "label": "Minimum Longitude",
+              "required": true,
+              "read_only": false,
+              "location": "QUERY",
+              "explode": false,
+              "default": 26.0,
+              "minimum": -90.0,
+              "maximum": 90.0,
+              "property": "epos:westernmostLongitude",
+              "role": "MIN_LON",
+              "multiple_values": false
+            },
+            {
+              "id": "fd0cf3e6-fbe6-5788-99ac-cdbc58890312",
+              "kind": "FLOAT",
+              "position": 14,
+              "name": "minlat",
+              "label": "Minimum Latitude",
+              "required": true,
+              "read_only": false,
+              "location": "QUERY",
+              "explode": false,
+              "default": 39.0,
+              "minimum": -90.0,
+              "maximum": 90.0,
+              "property": "epos:southernmostLatitude",
+              "role": "MIN_LAT",
+              "multiple_values": false
+            },
+            {
+              "id": "bf01e096-b893-53bb-86a7-9ed8fee6dc53",
+              "kind": "FLOAT",
+              "position": 15,
+              "name": "maxlat",
+              "label": "Maximum Latitude",
+              "required": true,
+              "read_only": false,
+              "location": "QUERY",
+              "explode": false,
+              "default": 42.0,
+              "minimum": -90.0,
+              "maximum": 90.0,
+              "property": "epos:northernmostLatitude",
+              "role": "MAX_LAT",
+              "multiple_values": false
+            },
+            {
+              "id": "556d69e4-3905-5481-89b9-c087d43f97b5",
+              "kind": "INTEGER",
+              "position": 16,
+              "name": "maxgap",
+              "label": "Degrees of azimuthal stations distribution gap per earthquake",
+              "required": true,
+              "read_only": false,
+              "location": "QUERY",
+              "explode": false,
+              "default": 150,
+              "maximum": 360,
+              "multiple_values": false
+            },
+            {
+              "id": "db3bddaf-f918-593a-848e-9ec3dc09eb8c",
+              "kind": "INTEGER",
+              "position": 17,
+              "name": "maxvpvssw",
+              "label": "Maximum quality weight allowed for a s-wave reading",
+              "required": false,
+              "read_only": false,
+              "location": "QUERY",
+              "explode": false,
+              "default": 3,
+              "minimum": 0,
+              "maximum": 4,
+              "multiple_values": false
+            },
+            {
+              "id": "930ee5e3-ef70-5bf7-8a19-84a0d013dea8",
+              "kind": "INTEGER",
+              "position": 18,
+              "name": "minnp",
+              "label": "Number of p-waves onset observations",
+              "required": true,
+              "read_only": false,
+              "location": "QUERY",
+              "explode": false,
+              "default": 2,
+              "multiple_values": false
+            },
+            {
+              "id": "8eae12c2-6250-51db-8724-c1b1f74f3de5",
+              "kind": "DATETIME",
+              "position": 19,
+              "name": "mintime",
+              "label": "Minimum Time",
+              "required": true,
+              "read_only": false,
+              "location": "QUERY",
+              "explode": false,
+              "default": "2017-01-01T00:00:00.000Z",
+              "minimum": "2017-01-01T00:00:00.000Z",
+              "property": "schema:startDate",
+              "layout": "YYYY-MM-DDThh:mm:ss.SSSZ",
+              "role": "START_DATE",
+              "multiple_values": false
+            }
+          ],
           "temporal_coverage": {
             "start": "2017-01-01T00:00:00Z"
           },
-          "documentation": {
-            "uri": "https://fridge.ingv.it/docs/API_prototype_documentation_NFO_VpVs.pdf"
-          }
-        },
-        "available_formats": [
-          {
-            "kind": "ORIGINAL",
-            "output_format": "application/json",
-            "label": "APPLICATION/JSON"
-          },
-          {
-            "kind": "CONVERTED",
-            "conversion_id": "93381acf-ca54-5806-a6e0-ba76ff6143c8",
-            "input_format": "application/json",
-            "output_format": "covjson",
-            "plugin": {
-              "id": "bd510e30-b118-58a8-b5a3-d27611b53cc7",
-              "name": "COVJSON",
-              "description": "COVJSON"
+          "documentation_uri": "https://fridge.ingv.it/docs/API_prototype_documentation_NFO_VpVs.pdf",
+          "available_formats": [
+            {
+              "kind": "ORIGINAL",
+              "output_format": "application/json",
+              "label": "APPLICATION/JSON"
+            },
+            {
+              "kind": "CONVERTED",
+              "conversion_id": "93381acf-ca54-5806-a6e0-ba76ff6143c8",
+              "input_format": "application/json",
+              "output_format": "covjson",
+              "plugin": {
+                "id": "bd510e30-b118-58a8-b5a3-d27611b53cc7",
+                "name": "COVJSON",
+                "description": "COVJSON"
+              }
             }
-          }
-        ]
+          ]
+        }
       }
     ],
     "categories": [
