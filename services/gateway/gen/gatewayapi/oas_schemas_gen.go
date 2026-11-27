@@ -18364,6 +18364,9 @@ func (s *WebServiceDistributionType) UnmarshalText(data []byte) error {
 	}
 }
 
+// Every service configuration must produce a default request without caller-supplied values. Required
+// scalar parameters, including template children and body parameters, must have defaults. Active
+// templates must render with those defaults.
 // Ref: #/components/schemas/WebServiceDraft
 // WebServiceDraft represents sum type.
 type WebServiceDraft struct {

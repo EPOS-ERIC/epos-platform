@@ -741,6 +741,11 @@ export type DownloadableFileDistributionDraft = {
   downloadable_file: DownloadableFile;
 };
 
+/**
+ * Every service configuration must produce a default request without caller-supplied values.
+ * Required scalar parameters, including template children and body parameters, must have defaults.
+ * Active templates must render with those defaults.
+ */
 export type WebServiceDraft =
   | (Omit<WmsWebServiceDraft, "type"> & {
       type: "WMS";
@@ -783,7 +788,7 @@ export type HttpWebServiceDraft = WebServiceDraftCommon &
   GenericWebServiceConfigurationDraft;
 
 /**
- * HTTP configuration with exactly one LONGITUDE and one LATITUDE FLOAT parameter across top-level parameters, template children, and body_parameters. Coordinate parameters must be required, editable, single-value, have no default or enum, and must not use explode. Optional minimum and maximum bounds are supported.
+ * HTTP configuration with exactly one LONGITUDE and one LATITUDE FLOAT parameter across top-level parameters, template children, and body_parameters. Coordinate parameters must be required, editable, single-value, have a default, have no enum, and must not use explode. Optional minimum and maximum bounds are supported.
  */
 export type DynamicWebServiceDraft = WebServiceDraftCommon &
   DynamicWebServiceConfigurationDraft;
@@ -809,7 +814,7 @@ export type GenericWebServiceConfigurationDraft =
   };
 
 /**
- * HTTP configuration with exactly one LONGITUDE and one LATITUDE FLOAT parameter across top-level parameters, template children, and body_parameters. Coordinate parameters must be required, editable, single-value, have no default or enum, and must not use explode. Optional minimum and maximum bounds are supported.
+ * HTTP configuration with exactly one LONGITUDE and one LATITUDE FLOAT parameter across top-level parameters, template children, and body_parameters. Coordinate parameters must be required, editable, single-value, have a default, have no enum, and must not use explode. Optional minimum and maximum bounds are supported.
  */
 export type DynamicWebServiceConfigurationDraft =
   SharedWebServiceConfigurationDraft & {

@@ -76,6 +76,10 @@ Published resource lists return current `PUBLISHED` versions grouped by logical 
 
 Software application and software source code are independent resource types. Their versions contain type-specific metadata plus creator, identifier, contact-point, and category links; they do not reference each other, distributions, or web services.
 
+### Web-service defaults
+
+Every web-service configuration must produce an executable default request without caller-supplied values. Required scalar parameters, including template children and body parameters, must have defaults; active templates must render using those defaults. Dynamic services also require defaults for longitude and latitude. Callers may supply values when accessing a service, subject to its parameter constraints.
+
 ## Metadata Ownership
 
 | Entity                           | Editor use                                     | Editor create/propose | Management                                          | Reference behavior                                                                                                                                        |
