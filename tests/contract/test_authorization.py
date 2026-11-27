@@ -147,6 +147,9 @@ class AuthorizationContractTest(unittest.TestCase):
             "global.membership.manage": "GLOBAL",
             "global.role.manage": "GLOBAL",
             "global.permission.manage": "GLOBAL",
+            "global.admin.manage": "GLOBAL",
+            "global.user.block": "GLOBAL",
+            "global.resource.read": "GLOBAL",
             "global.user_api_token.revoke": "GLOBAL",
             "global.notification.manage": "GLOBAL",
             "global.organization.manage": "GLOBAL",
@@ -338,12 +341,14 @@ class AuthorizationContractTest(unittest.TestCase):
         self.assert_forbidden(blocked_published)
 
     def test_user_directory_authorization(self) -> None:
-        """Verify global user access permissions and admin-only user actions."""
+        """Verify user access and explicitly delegated administrative actions."""
 
         suffix = str(uuid4())
         directory_manager, _ = self.create_user("directory-manager", suffix)
         role_manager, _ = self.create_user("role-manager", suffix)
         permission_manager, _ = self.create_user("permission-manager", suffix)
+        admin_manager, admin_manager_id = self.create_user("admin-manager", suffix)
+        blocker, blocker_id = self.create_user("blocker", suffix)
         denied, _ = self.create_user("directory-denied", suffix)
         target, target_id = self.create_user("directory-target", suffix)
 
@@ -359,6 +364,8 @@ class AuthorizationContractTest(unittest.TestCase):
             self.user_id(role_manager),
             "global.role.manage",
         )
+        self.grant_global_permission(admin_manager_id, "global.admin.manage")
+        self.grant_global_permission(blocker_id, "global.user.block")
 
         missing_token_response = self.gateway.get(
             "/users",
@@ -393,6 +400,9 @@ class AuthorizationContractTest(unittest.TestCase):
                 "global.membership.manage",
                 "global.role.manage",
                 "global.permission.manage",
+                "global.admin.manage",
+                "global.user.block",
+                "global.resource.read",
                 "global.user_api_token.revoke",
                 "global.notification.manage",
                 "global.organization.manage",
@@ -456,7 +466,7 @@ class AuthorizationContractTest(unittest.TestCase):
             json={"reason": "authorization contract test"},
         )
         self.assert_forbidden(denied_block_response)
-        block_response = self.gateway.post(
+        block_response = blocker.post(
             "/users/{id}/block",
             id=target_id,
             json={"reason": "authorization contract test"},
@@ -467,7 +477,7 @@ class AuthorizationContractTest(unittest.TestCase):
             id=target_id,
         )
         self.assert_forbidden(denied_unblock_response)
-        unblock_response = self.gateway.post(
+        unblock_response = blocker.post(
             "/users/{id}/unblock",
             id=target_id,
         )
@@ -479,13 +489,13 @@ class AuthorizationContractTest(unittest.TestCase):
             role="ADMIN",
         )
         self.assert_forbidden(denied_role_response)
-        assign_role_response = self.gateway.put(
+        assign_role_response = admin_manager.put(
             "/users/{id}/global-roles/{role}",
             id=target_id,
             role="ADMIN",
         )
         self.assertEqual(assign_role_response.status_code, 204)
-        remove_role_response = self.gateway.delete(
+        remove_role_response = admin_manager.delete(
             "/users/{id}/global-roles/{role}",
             id=target_id,
             role="ADMIN",
@@ -985,6 +995,29 @@ class AuthorizationContractTest(unittest.TestCase):
         drafts = [version for version in versions if version["status"] == "DRAFT"]
         self.assertEqual(len(drafts), 1)
         draft = drafts[0]
+        version_args = {
+            "resourceType": "dataset",
+            "id": resource_id,
+            "versionId": draft["id"],
+        }
+        assert_problem(self, operator.get(
+            "/resources/{resourceType}/{id}/versions/{versionId}", **version_args
+        ), 404, "not_found")
+        self.assert_forbidden(operator.get("/contact-points"))
+        self.grant_global_permission(operator_id, "global.resource.read")
+        self.assertEqual(operator.get(
+            "/resources/{resourceType}/{id}/versions/{versionId}", **version_args
+        ).status_code, 200)
+        self.assertEqual(operator.get(
+            "/resources/{resourceType}/{id}/versions",
+            resourceType="dataset",
+            id=resource_id,
+        ).status_code, 200)
+        self.assertEqual(operator.get("/contact-points").status_code, 200)
+        self.assert_forbidden(operator.get("/users"))
+        self.assert_forbidden(operator.get(
+            "/groups/{groupId}/memberships", groupId=group_id
+        ))
         self.grant_global_permission(operator_id, "global.resource.edit")
         replaced = operator.put(
             "/resources/{id}/versions/{versionId}/draft",

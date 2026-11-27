@@ -15003,6 +15003,10 @@ func (s *GlobalPermission) Decode(d *jx.Decoder) error {
 		*s = GlobalPermissionGlobalRoleManage
 	case GlobalPermissionGlobalPermissionManage:
 		*s = GlobalPermissionGlobalPermissionManage
+	case GlobalPermissionGlobalAdminManage:
+		*s = GlobalPermissionGlobalAdminManage
+	case GlobalPermissionGlobalUserBlock:
+		*s = GlobalPermissionGlobalUserBlock
 	case GlobalPermissionGlobalUserAPITokenRevoke:
 		*s = GlobalPermissionGlobalUserAPITokenRevoke
 	case GlobalPermissionGlobalNotificationManage:
@@ -15015,6 +15019,8 @@ func (s *GlobalPermission) Decode(d *jx.Decoder) error {
 		*s = GlobalPermissionGlobalGroupManage
 	case GlobalPermissionGlobalConceptManage:
 		*s = GlobalPermissionGlobalConceptManage
+	case GlobalPermissionGlobalResourceRead:
+		*s = GlobalPermissionGlobalResourceRead
 	case GlobalPermissionGlobalResourceCreate:
 		*s = GlobalPermissionGlobalResourceCreate
 	case GlobalPermissionGlobalResourceEdit:

@@ -4221,6 +4221,10 @@ func (s GlobalPermission) Validate() error {
 		return nil
 	case "global.permission.manage":
 		return nil
+	case "global.admin.manage":
+		return nil
+	case "global.user.block":
+		return nil
 	case "global.user_api_token.revoke":
 		return nil
 	case "global.notification.manage":
@@ -4232,6 +4236,8 @@ func (s GlobalPermission) Validate() error {
 	case "global.group.manage":
 		return nil
 	case "global.concept.manage":
+		return nil
+	case "global.resource.read":
 		return nil
 	case "global.resource.create":
 		return nil

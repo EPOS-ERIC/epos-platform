@@ -110,13 +110,6 @@ func (a *Authorizer) CanManageGlobalNotificationSubscriptions(ctx context.Contex
 	if target.Status != domain.UserStatusActive {
 		return domain.Result{Allowed: false, Reason: "target user is not active"}, nil
 	}
-	admin, err := a.repository.IsGlobalAdmin(ctx, actorID)
-	if err != nil {
-		return domain.Result{}, fmt.Errorf("check global admin: %w", err)
-	}
-	if admin {
-		return domain.Result{Allowed: true, Reason: "global admin"}, nil
-	}
 	allowed, err := a.repository.HasGlobalPermission(ctx, actorID, domain.GlobalPermissionNotificationManage)
 	if err != nil {
 		return domain.Result{}, fmt.Errorf("check global notification permission: %w", err)
@@ -149,13 +142,6 @@ func (a *Authorizer) CanManageGroupNotificationSubscriptions(ctx context.Context
 
 	if _, result, err = a.activeUser(ctx, actorID); err != nil || !result.Allowed {
 		return result, err
-	}
-	admin, err := a.repository.IsGlobalAdmin(ctx, actorID)
-	if err != nil {
-		return domain.Result{}, fmt.Errorf("check global admin: %w", err)
-	}
-	if admin {
-		return domain.Result{Allowed: true, Reason: "global admin"}, nil
 	}
 	globalAllowed, err := a.repository.HasGlobalPermission(ctx, actorID, domain.GlobalPermissionNotificationManage)
 	if err != nil {
@@ -315,14 +301,6 @@ func (a *Authorizer) CanListGroupMemberships(ctx context.Context, actor string, 
 	_, result, err = a.activeUser(ctx, actor)
 	if err != nil || !result.Allowed {
 		return result, err
-	}
-
-	admin, err := a.repository.IsGlobalAdmin(ctx, actor)
-	if err != nil {
-		return domain.Result{}, fmt.Errorf("check global admin: %w", err)
-	}
-	if admin {
-		return domain.Result{Allowed: true, Reason: "global admin"}, nil
 	}
 
 	// TODO: see if these kind of permission checks could use an helper or an ad hoc query to check for more than one permission
@@ -720,19 +698,19 @@ func (a *Authorizer) CanReadResourceVersions(ctx context.Context, userID string,
 	return a.canReadResourceGroup(ctx, userID, groupID)
 }
 
-// canReadResourceGroup permits active users who are global admins or active group members.
+// canReadResourceGroup permits active users with global read permission or group membership.
 func (a *Authorizer) canReadResourceGroup(ctx context.Context, userID string, groupID uuid.UUID) (domain.Result, error) {
 	_, result, err := a.activeUser(ctx, userID)
 	if err != nil || !result.Allowed {
 		return result, err
 	}
 
-	admin, err := a.repository.IsGlobalAdmin(ctx, userID)
+	allowed, err := a.repository.HasGlobalPermission(ctx, userID, domain.GlobalPermissionResourceRead)
 	if err != nil {
-		return domain.Result{}, fmt.Errorf("check global admin: %w", err)
+		return domain.Result{}, fmt.Errorf("check global resource read permission: %w", err)
 	}
-	if admin {
-		return domain.Result{Allowed: true, Reason: "global admin"}, nil
+	if allowed {
+		return domain.Result{Allowed: true, Reason: string(domain.GlobalPermissionResourceRead)}, nil
 	}
 
 	member, err := a.repository.IsActiveMember(ctx, userID, groupID)
@@ -757,12 +735,12 @@ func (a *Authorizer) CanReadContactPoint(ctx context.Context, userID string) (re
 		return result, err
 	}
 
-	admin, err := a.repository.IsGlobalAdmin(ctx, userID)
+	allowed, err := a.repository.HasGlobalPermission(ctx, userID, domain.GlobalPermissionResourceRead)
 	if err != nil {
-		return domain.Result{}, fmt.Errorf("check global admin: %w", err)
+		return domain.Result{}, fmt.Errorf("check global resource read permission: %w", err)
 	}
-	if admin {
-		return domain.Result{Allowed: true, Reason: "global admin"}, nil
+	if allowed {
+		return domain.Result{Allowed: true, Reason: string(domain.GlobalPermissionResourceRead)}, nil
 	}
 
 	member, err := a.repository.HasAnyActiveMembership(ctx, userID)
@@ -812,14 +790,21 @@ func (a *Authorizer) AuthorizeDiscovery(ctx context.Context, actor *string, cand
 	}
 
 	visibleGroupIDs := map[uuid.UUID]struct{}{}
+	globalRead := false
+	if user != nil {
+		globalRead, err = a.repository.HasGlobalPermission(ctx, *actor, domain.GlobalPermissionResourceRead)
+		if err != nil {
+			return domain.DiscoveryAuthorization{}, fmt.Errorf("check global resource read permission: %w", err)
+		}
+	}
 
 	// Find the groups where the user is an active member to protect fields like "created_by".
 	switch {
 	case user == nil:
 		// No active user: nothing to look up, nothing to grant beyond defaults.
 
-	case user.GlobalAdmin:
-		// Admins bypass membership checks entirely; expose every candidate's group.
+	case globalRead:
+		// Global readers bypass membership checks; expose every candidate's group.
 		for _, c := range candidates {
 			visibleGroupIDs[c.GroupID] = struct{}{}
 		}
@@ -845,7 +830,7 @@ func (a *Authorizer) AuthorizeDiscovery(ctx context.Context, actor *string, cand
 		if user == nil {
 			continue
 		}
-		if user.GlobalAdmin {
+		if globalRead {
 			allowed = append(allowed, c)
 			continue
 		}
