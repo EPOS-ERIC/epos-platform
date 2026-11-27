@@ -6,11 +6,20 @@ import { Domain } from '../data/domain.interface';
 import { DatasetSummary } from '../data/datasetSummary.interface';
 
 export interface DiscoverApi {
+  getConcepts(): Promise<ConceptMetadata[]>;
+
+  searchConcept(conceptId: string): Promise<string[]>;
+
   discover(request: DiscoverRequest): Promise<null | DiscoverResponse>;
 
   getFilters(context: string): Promise<null | DiscoverResponse>;
 
   getDomains(context: string): Promise<null | Array<Domain>>;
+}
+
+export interface ConceptMetadata {
+  id: string;
+  name: string;
 }
 
 export interface DiscoverResponse {

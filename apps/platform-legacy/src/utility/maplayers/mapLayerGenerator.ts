@@ -8,6 +8,7 @@ import { Configurable } from 'api/webApi/data/configurable.interface';
 import { GeoJSONMapLayerFactory } from './geoJSONMapLayerFactory';
 import { WMSMapLayerFactory } from './wmsMapLayerFactory';
 import { DistributionFormat } from 'api/webApi/data/distributionFormat.interface';
+import { SimpleDistributionFormat } from 'api/webApi/data/impl/simpleDistributionFormat';
 import { MapLayerFactory } from './mapLayerFactory.interface';
 import { MapLayerFromConfigurableStrategy } from './mapLayerFromConfigurableStrategy';
 import { CompositeMapLayerFactory } from './compositeMapLayerFactory';
@@ -129,6 +130,8 @@ export class MapLayerGenerator {
                 layer.options.set('layers', format.resourceAccess.defaultLayer);
                 layer.options.set('styles', format.resourceAccess.defaultStyle ?? '');
                 layer.options.set('transparent', format.resourceAccess.defaultTransparency ?? true);
+                layer.options.set('customLayerOptionTileParameters', SimpleDistributionFormat.getOperationParameters(format, dataConfigurable.currentParamValues, 'tile'));
+                layer.options.set('customLayerOptionFeatureInfoParameters', SimpleDistributionFormat.getOperationParameters(format, dataConfigurable.currentParamValues, 'featureInfo'));
               } else {
                 layer.setServiceUrlRetriever(() => dataConfigurable.getOriginatorUrl());
               }
@@ -149,6 +152,9 @@ export class MapLayerGenerator {
               if (format.resourceAccess?.type === 'WMTS') {
                 layer.options.set('customLayerOptionCapabilitiesUrl', format.resourceAccess.capabilitiesUrl);
                 layer.options.set('LAYER', format.resourceAccess.defaultLayer);
+                layer.options.set('customLayerOptionServiceLayers', format.resourceAccess.layers);
+                layer.options.set('customLayerOptionTileParameters', SimpleDistributionFormat.getOperationParameters(format, dataConfigurable.currentParamValues, 'tile'));
+                layer.options.set('customLayerOptionFeatureInfoParameters', SimpleDistributionFormat.getOperationParameters(format, dataConfigurable.currentParamValues, 'featureInfo'));
                 if (format.resourceAccess.defaultStyle != null) {
                   layer.options.set('STYLE', format.resourceAccess.defaultStyle);
                 }

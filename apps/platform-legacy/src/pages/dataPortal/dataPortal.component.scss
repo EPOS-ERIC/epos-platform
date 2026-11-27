@@ -43,18 +43,56 @@
     }
   }
 
-  .left-sidenav-data-toggle,
-  .left-sidenav-analysis-toggle,
-  .left-sidenav-registry-toggle,
-  .left-sidenav-software-toggle {
+  .left-panel-tabs {
     position: absolute;
     z-index: 3;
     top: $sidenav-left-top;
     left: 0;
-    height: $sidenav-button-height;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-right: 14px;
+    overflow: auto;
+    scrollbar-width: none;
+    pointer-events: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
+  .left-sidenav-concept-toggle,
+  .left-sidenav-analysis-toggle {
+    flex: 0 0 auto;
     width: $sidenav-button-width;
-    transition-property: top;
-    transition-duration: 3s, 5s;
+    pointer-events: auto;
+
+    .button-text {
+      writing-mode: vertical-rl;
+      rotate: 180deg;
+      max-height: 64px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  .concept-panel {
+    height: calc(100vh - #{$sidenav-left-top});
+    overflow: auto;
+    box-sizing: border-box;
+    padding: 16px;
+    background-color: $color-background-panel;
+    overflow-wrap: anywhere;
+  }
+
+  .concepts-load-error {
+    position: absolute;
+    z-index: 3;
+    top: $sidenav-left-top;
+    left: $sidenav-margin;
+    padding: 8px;
+    background-color: $color-background-panel;
   }
 
   .sidenav-left {
@@ -121,10 +159,8 @@
     width: $sidenav-button-width;
   }
 
-  .left-sidenav-data-toggle,
+  .left-sidenav-concept-toggle,
   .left-sidenav-analysis-toggle,
-  .left-sidenav-registry-toggle,
-  .left-sidenav-software-toggle,
   .right-sidenav-toggle,
   .bottom-sidenav-toggle {
     background-color: $header-background-color;
@@ -135,7 +171,6 @@
 
     .button-text {
       font-weight: bold;
-      transform: rotate(-90deg);
       margin-bottom: 15px;
       font-size: 1.2vh;
     }
@@ -143,6 +178,11 @@
     .selected {
       color: $color-secondary;
     }
+  }
+
+  .right-sidenav-toggle .button-text,
+  .bottom-sidenav-toggle .button-text {
+    transform: rotate(-90deg);
   }
 
   .mat-drawer.sidenav,
@@ -191,14 +231,6 @@
 
   .sidenavanalysis {
     z-index: 1;
-  }
-
-  .analysis-panel-button-wrapper,
-  .registry-panel-button-wrapper,
-  .software-panel-button-wrapper {
-    position: absolute;
-    transition-property: top;
-    transition-duration: 0.2s;
   }
 
   .analysisPanel {

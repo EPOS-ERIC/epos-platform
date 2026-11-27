@@ -1,3 +1,4 @@
+import { SimpleDistributionFormat } from 'api/webApi/data/impl/simpleDistributionFormat';
 import { HttpClient } from '@angular/common/http';
 import * as L from 'leaflet';
 import { FeatureDisplayItem } from '../featureDisplay/featureDisplayItem';
@@ -112,13 +113,13 @@ export class WmtsFeatureDisplayItemGenerator implements FeatureDisplayItemGenera
       parameters.set(WMTSParameter.TILEROW, `${coord.y}` );
       parameters.set(WMTSParameter.TILECOL, `${coord.x}` );
       parameters.set(WMTSParameter.STYLE, layer.styleFromXML); // TOBE CHECKED: when i've got multiple WMTS layers active, will styleFromXML retrieve the one matching the actual layer? Should, but check
-      parameters.set('info_format', 'application/json');
+      parameters.set('info_format', layer.getFeatureInfoFormat || 'application/json');
 
-      /* if (null != overrideParamsFunction) {
+      if (null != overrideParamsFunction) {
         overrideParamsFunction().forEach((value: string, key: string) => {
           parameters.set(key, value);
         });
-      } */
+      }
       // URL template
       const getFeatureInfoUrlTemplate = layer.getFeatureInfoBaseURL;
       // initialize url variable, will hold final URL with replaced params
@@ -131,16 +132,20 @@ export class WmtsFeatureDisplayItemGenerator implements FeatureDisplayItemGenera
         const placeholders = Array.from(getFeatureInfoUrlTemplate.matchAll(/\{([^}]+)\}/g), m => m[1].toUpperCase());
         // Replace each placeholder with corresponding parameter value if it exists
         placeholders.forEach((param) => {
-          if (parameters.has(param)) {
-            const value = parameters.get(param);
+          if (parameters.has(param) || parameters.has(param.toLowerCase())) {
+            const value = parameters.get(param) ?? parameters.get(param.toLowerCase());
             // Replace all occurrences of the placeholder (case-insensitive inside {})
             // RegExp that matches the exact placeholder inside {}
             const regex = new RegExp(`\\{${param}\\}`, 'gi');
-            url = url.replace(regex, value ?? '');
+            url = url.replace(regex, encodeURIComponent(value ?? ''));
           }
         });
       }
-      return url.replace(/ /g, '');
+      if (url === '') {
+        return '';
+      }
+      const providerParameters = layer.options.get<URLSearchParams>('customLayerOptionFeatureInfoParameters');
+      return providerParameters == null ? url : SimpleDistributionFormat.withParameters(url, providerParameters);
     } else {
       return '';
     }

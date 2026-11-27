@@ -7,7 +7,7 @@ import { SearchApi } from '../../classes/searchApi.interface';
 import { ItemSummary } from '../../data/itemSummary.interface';
 import { Dictionary } from '../../data/dictionary.interface';
 import { ExecutionApi } from '../../classes/executionApi.interface';
-import { DiscoverApi, DiscoverResponse, DiscoverRequest } from '../../classes/discoverApi.interface';
+import { ConceptMetadata, DiscoverApi, DiscoverResponse, DiscoverRequest } from '../../classes/discoverApi.interface';
 import { DistributionSummary } from 'api/webApi/data/distributionSummary.interface';
 import { DistributionDetails } from '../../data/distributionDetails.interface';
 import { ParameterValue } from '../../data/parameterValue.interface';
@@ -40,6 +40,14 @@ export class DevCompositeApi implements Api {
   ) { }
 
   // ---------------------------
+
+  getConcepts(): Promise<ConceptMetadata[]> {
+    return this.discoverApi.getConcepts();
+  }
+
+  searchConcept(conceptId: string): Promise<string[]> {
+    return this.discoverApi.searchConcept(conceptId);
+  }
 
   discover(request: DiscoverRequest): Promise<null | DiscoverResponse> {
     return this.discoverApi.discover(request);
@@ -130,9 +138,10 @@ export class DevCompositeApi implements Api {
    */
   getOriginatorUrl(
     distribution: DistributionSummary,
-    params: Array<ParameterValue>
+    params: Array<ParameterValue>,
+    format?: DistributionFormat,
   ): Promise<string> {
-    return this.executionApi.getOriginatorUrl(distribution, params);
+    return this.executionApi.getOriginatorUrl(distribution, params, format);
   }
 
 

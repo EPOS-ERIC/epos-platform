@@ -1,6 +1,6 @@
 import { Confirm } from '../../utility/preconditions';
 import { DistributionType } from '../distributionType.enum';
-import { DistributionDetails } from '../distributionDetails.interface';
+import { DatasetDetailsMetadata, DistributionDetails, WebServiceDetailsMetadata } from '../distributionDetails.interface';
 import { TemporalRange } from '../temporalRange.interface';
 import { SpatialRange } from '../spatialRange.interface';
 import { DistributionSummary } from '../distributionSummary.interface';
@@ -65,7 +65,9 @@ export class SimpleDistributionDetails implements DistributionDetails {
     private readonly softwareVersion: string | null,
     private readonly requirements: string,
     private readonly runtimePlatform: string,
-    private readonly creator: Array<Creator>
+    private readonly creator: Array<Creator>,
+    public readonly datasetMetadata: DatasetDetailsMetadata | null = null,
+    public readonly webServiceMetadata: WebServiceDetailsMetadata | null = null
   ) {
     this.uid = (uid);
     this.resourceVersion = this.summary.resourceVersion;
@@ -120,7 +122,9 @@ export class SimpleDistributionDetails implements DistributionDetails {
     softwareVersion: string | null,
     requirements: string,
     runtimePlatform: string,
-    creator: Array<Creator>
+    creator: Array<Creator>,
+    datasetMetadata: DatasetDetailsMetadata | null = null,
+    webServiceMetadata: WebServiceDetailsMetadata | null = null
   ): DistributionDetails {
     // objects
     Confirm.requiresValid(summary);
@@ -163,7 +167,9 @@ export class SimpleDistributionDetails implements DistributionDetails {
       softwareVersion,
       requirements,
       runtimePlatform,
-      creator
+      creator,
+      datasetMetadata,
+      webServiceMetadata
     );
   }
 

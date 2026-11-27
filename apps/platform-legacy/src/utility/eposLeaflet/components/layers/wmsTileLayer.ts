@@ -1,4 +1,5 @@
 import * as L from 'leaflet';
+ import { SimpleDistributionFormat } from 'api/webApi/data/impl/simpleDistributionFormat';
  import { HttpClient } from '@angular/common/http';
  import { Legend } from '../controls/legendControl/legend';
  import { TileLayer } from './tileLayer';
@@ -46,7 +47,22 @@ import * as L from 'leaflet';
      this.setLayerBboxRetrieverFunction(this.getLayerBboxFromGetCapabilitiesXml.bind(this) as (layer: MapLayer, http: HttpClient) => Promise<null | Array<number>>);
    }
 
-   public getLeafletLayer(): Promise<null | L.Layer> {
+   public async getLeafletLayer(http: HttpClient): Promise<null | L.Layer> {
+     if (this.options.get('customLayerOptionCapabilitiesUrl') != null) {
+       const xml = await this.getCapabilitiesXml(http);
+       const formats = xml.find('Capability > Request > GetMap > Format').map((_, element) => jQuery(element).text()).get();
+       const format = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'].find(candidate => formats.includes(candidate));
+       if (format == null) {
+         throw new Error('The WMS provider advertises no supported map image format.');
+       }
+       this.options.set('format', format);
+       this.options.set('version', xml.find('WMS_Capabilities, WMT_MS_Capabilities').attr('version'));
+       const featureInfoResource = xml.find('Capability > Request > GetFeatureInfo > DCPType > HTTP > Get > OnlineResource').first();
+       const featureInfoUrl = featureInfoResource.attr('xlink:href') ?? featureInfoResource.attr('href');
+       if (featureInfoUrl != null) {
+         this.options.set('customLayerOptionFeatureInfoUrl', new URL(featureInfoUrl, this.options.get<string>('customLayerOptionCapabilitiesUrl')!).toString());
+       }
+     }
      return new Promise((resolve) => {
        try {
          // use copy
@@ -70,7 +86,8 @@ import * as L from 'leaflet';
            }
          });
          const capabilitiesUrl = this.options.get<string>('customLayerOptionCapabilitiesUrl');
-         const tileUrl = capabilitiesUrl ? new URL(capabilitiesUrl) : null;
+         const onlineResource = this.getCapabilitiesXML?.find('Capability > Request > GetMap > DCPType > HTTP > Get > OnlineResource').first();
+         const tileUrl = capabilitiesUrl ? new URL(onlineResource?.attr('xlink:href') ?? onlineResource?.attr('href') ?? capabilitiesUrl, capabilitiesUrl) : null;
          if (tileUrl != null) {
            Array.from(tileUrl.searchParams.keys()).forEach(key => {
              if (['service', 'request', 'version'].includes(key.toLowerCase())) {
@@ -78,7 +95,9 @@ import * as L from 'leaflet';
              }
            });
          }
-         return resolve(L.tileLayer.wms(tileUrl?.toString() ?? this.url, optionsCopy));
+         const tileParameters = this.options.get<URLSearchParams>('customLayerOptionTileParameters');
+         const url = tileUrl?.toString() ?? this.url;
+         return resolve(L.tileLayer.wms(tileParameters == null ? url : SimpleDistributionFormat.withParameters(url, tileParameters), optionsCopy));
        } catch (e) {
          // TODO send user an error?
          console.error('Layer not found');

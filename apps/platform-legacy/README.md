@@ -29,6 +29,18 @@ Essential commands and runtime config for local development and Docker deploymen
 
 Build output is written to `dist/`.
 
+## Data portal concept tabs
+
+The data portal creates its sidebar tabs in the order returned by `GET /api/v1/concepts` and starts a search for each concept ID. Data, Facilities, and Software use their specialized panels when the corresponding module is enabled. Other tabs display the resource names returned by `GET /api/v1/search?conceptId=<id>` and remain available when the result list is empty.
+
+## Dataset web service formats
+
+HTTP, DYNAMIC and WFS use the flattened `web_service.available_formats`. Each download row retains its exact native format or conversion ID and plugin; provider URL preparation supports native formats only.
+
+WMS and WMTS use internal `SERVICE` descriptors to select map adapters, without advertising provider output formats or conversions. They access providers directly. WMS map and download image formats are checked against GetCapabilities; WMTS retains the existing TileJSON map path and does not advertise a whole-service download.
+
+Provider query parameters and the separate map/tile and GetFeatureInfo parameter sets are retained. Operation inputs use parameter IDs internally to avoid collisions between operations. HTTP/DYNAMIC/WFS templates remain rendered by Gateway. Direct WMS/WMTS operation templates support `{{.name}}` field substitution; other Go template expressions produce an explicit error rather than an incorrectly rendered provider request.
+
 ## Docker configuration
 
 The container image supports runtime configuration via environment variables.

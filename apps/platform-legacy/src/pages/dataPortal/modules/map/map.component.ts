@@ -1,4 +1,5 @@
 import { Component, Injector, OnInit, ComponentFactoryResolver, ViewContainerRef } from '@angular/core';
+import { SimpleDistributionFormat } from 'api/webApi/data/impl/simpleDistributionFormat';
 import {
   MapLayer,
   BoundingBox as EposLeafletBoundingBox,
@@ -760,7 +761,8 @@ export class MapComponent implements OnInit {
           this.http.get<TileJSON>(getTileJSONStyleReplaced)
             .toPromise()
             .then((res: TileJSON) => {
-              const tileUrl = res.tiles[0];
+              const rawTileUrl = res.tiles[0];
+              const tileUrl = rawTileUrl ? SimpleDistributionFormat.withParameters(rawTileUrl, new URLSearchParams(WMTSLayerStorage.get(customId)?.tileParameters)) : rawTileUrl;
               // if tileUrl is not empty, set the template
               if (tileUrl != null && tileUrl !== '') {
 
@@ -771,6 +773,7 @@ export class MapComponent implements OnInit {
                 newWmtsTileLayer.styleFromXML = style;
                 newWmtsTileLayer.legendsURL = legendsURL;
                 newWmtsTileLayer.getFeatureInfoBaseURL = featureInfoURLtemplate;
+                newWmtsTileLayer.getFeatureInfoFormat = WMTSLayerStorage.get(customId)?.featureInfoFormat ?? '';
                 newWmtsTileLayer.options.setOptions({ TILEMATRIXSET: tileMatrixSet });
                 newWmtsTileLayer.options.setOptions({ LAYER: layerName });
                 newWmtsTileLayer.visibleOnLayerControl.set(false);

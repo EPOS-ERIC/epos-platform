@@ -1,3 +1,4 @@
+import { SimpleDistributionFormat } from 'api/webApi/data/impl/simpleDistributionFormat';
 import * as L from 'leaflet';
 import { HttpClient } from '@angular/common/http';
 import { Legend } from '../controls/legendControl/legend';
@@ -42,6 +43,8 @@ export interface WMTSLayerTableData {
   coordinates: Array<string>;
   tileJSONTemplate: string;
   featureInfoTemplate: string;
+  tileParameters?: string;
+  featureInfoFormat?: string;
   style: string;
   legendsURL: string;
   tableRowPropertyId: string;
@@ -165,7 +168,7 @@ export class WmtsTileLayer extends TileLayer {
           switch (true) {
             case key.toLowerCase() === 'bbox':
               break;
-            case key.startsWith('customLayerOption'):
+            case key.toLowerCase().startsWith('customlayeroption'):
               break;
             case WmtsTileLayer.WMTSParameters.includes(key.toUpperCase()):
               parameters.set(key.toUpperCase(), options[key] as string);
@@ -207,8 +210,11 @@ export class WmtsTileLayer extends TileLayer {
             }
 
             // PARSE GetCapabilities XML
+            const tileParameters = this.options.get<URLSearchParams>('customLayerOptionTileParameters') ?? new URLSearchParams();
             const selectedLayerIdentifier = this.options.get<string>(WMTSParameter.LAYER);
             const configuredStyle = this.options.get<string>('STYLE');
+            const serviceLayers = this.options.get<Array<{ name: string; styles: Array<string> }>>('customLayerOptionServiceLayers');
+            const allowedStyles = serviceLayers?.find(layer => layer.name === selectedLayerIdentifier)?.styles ?? [];
             const capabilityLayers = capabilities.find('Layer').filter(function() {
               if (!selectedLayerIdentifier) {
                 return true;
@@ -275,10 +281,15 @@ export class WmtsTileLayer extends TileLayer {
                   style = layerEl.find('Style > ows\\:Identifier, Style > Identifier').first().text();
                 }
                 style = configuredStyle ?? style;
+                if (configuredStyle == null && allowedStyles.length > 0 && !allowedStyles.includes(style)) {
+                  style = allowedStyles[0];
+                }
 
                 // these two flags are needed to signal if both cases of following ".each()" iteration have been tapped!
                 let tileJSONTapped = false;
                 let featureInfoTapped = false;
+                // array of found formats, to be used in fallback if no 'application/json' format found
+                const foundFeatureInfoFormats: string[] = [];
                 // finding both the TileJSON and FeatureInfo URL; also 'format' for FeatureInfo
                 layerEl.find('ResourceURL').each((index, element) => {
 
@@ -291,8 +302,6 @@ export class WmtsTileLayer extends TileLayer {
                   // for raw FeatureInfo Url template (no need for stripping here)
                   let rawTemplateFeatureInfo = '';
 
-                  // array of found formats, to be used in fallback if no 'application/json' format found
-                  const foundFeatureInfoFormats: string[] = [];
 
                   switch(resourceType){
                     case 'TileJSON':
@@ -347,6 +356,8 @@ export class WmtsTileLayer extends TileLayer {
                           featInfoFormat = foundFeatureInfoFormats[0];
                           featureInfoTapped = true;
                         }
+                        getFeatureInfoUrl = layerEl.find('ResourceURL').filter((_, resource) => $(resource).attr('resourceType') === 'FeatureInfo'
+                          && $(resource).attr('format') === featInfoFormat).first().attr('template') ?? '';
                       }
                       break;
                     default:
@@ -364,7 +375,7 @@ export class WmtsTileLayer extends TileLayer {
                   // make request for TileJSON
                   // eslint-disable-next-line @typescript-eslint/no-unused-vars
                   const getTileJSON = http
-                  .get(getTileJSONUrl)
+                  .get(SimpleDistributionFormat.withParameters(getTileJSONUrl, tileParameters))
                   .toPromise()
                   .catch((error) => {
                     console.error('Error fetching TileJSON:', error);
@@ -375,7 +386,7 @@ export class WmtsTileLayer extends TileLayer {
                     const zyxGetTile = res.tiles[0];
                     if (zyxGetTile != null && zyxGetTile.length > 0) {
                       // finally assigning the GetTile URL string to getTileUrl
-                      getTileUrl = zyxGetTile;
+                      getTileUrl = SimpleDistributionFormat.withParameters(zyxGetTile, tileParameters);
                       // finally CREATING the layer, passing it the GetTile URL
                       resolve(L.tileLayer(getTileUrl, optionsCopy));
                     }
@@ -631,6 +642,11 @@ export class WmtsTileLayer extends TileLayer {
             const title = $(element).find('ows\\:Title, Title').text();
             // Hey ! You're retrieving "Identifier" property  because that's what's used as {layer} param in WMTS requests!
             const layerIdentifier = $(element).find('> ows\\:Identifier, Identifier').text();
+            const serviceLayers = this.options.get<Array<{ name: string; defaultStyle?: string; styles: Array<string> }>>('customLayerOptionServiceLayers');
+            const configuredLayer = serviceLayers?.find(item => item.name === layerIdentifier);
+            if (serviceLayers != null && configuredLayer == null) {
+              return;
+            }
 
             const tileMatrixSet = $(element)
             .find('ows\\:TileMatrixSetLink, TileMatrixSetLink')
@@ -677,7 +693,7 @@ export class WmtsTileLayer extends TileLayer {
 
             // Layer ID (the one that is used in map.component to create/remove the layer). So: if it's default layer use the 'configID' as ID, otherwise use the 'newID'.
             // checking on defaultPlaceHolderID just to establish this is the first iteration passing the alreadySetBounds check, so this first one will have 'this.id'
-            if(this.defaultLayerPlaceholderID === 'placeholderID'){
+            if(serviceLayers != null ? layerIdentifier === this.options.get(WMTSParameter.LAYER) : this.defaultLayerPlaceholderID === 'placeholderID'){
               // clean up variable
               this.defaultLayerPlaceholderID = null;
               isDefaultLayer = true;
@@ -711,6 +727,8 @@ export class WmtsTileLayer extends TileLayer {
               layerStyle = $(element).find('Style > ows\\:Identifier, Style > Identifier').first().text();
               legendsURL = $(element).find('Style > ows\\:LegendURL, Style > LegendURL').first().attr('xlink:href') || '';
             }
+            layerStyle = configuredLayer?.defaultStyle ?? (configuredLayer?.styles.length && !configuredLayer.styles.includes(layerStyle)
+              ? configuredLayer.styles[0] : layerStyle);
             // FeatureInfo URL Template
             const featureInfoTemplate =
             $(element).find('ResourceURL[resourceType="FeatureInfo"][format="application/json"]').attr('template') ||
@@ -732,8 +750,10 @@ export class WmtsTileLayer extends TileLayer {
               layerIdentifier: layerIdentifier,
               tileMatrixSet: tileMatrixSet,
               coordinates: boundsInLeafletOrder,
-              tileJSONTemplate: tileJSONTemplate,
-              featureInfoTemplate: featureInfoTemplate,
+              tileJSONTemplate: tileJSONTemplate === '' ? '' : SimpleDistributionFormat.withParameters(tileJSONTemplate, this.options.get<URLSearchParams>('customLayerOptionTileParameters') ?? new URLSearchParams()),
+              featureInfoTemplate: featureInfoTemplate === '' ? '' : SimpleDistributionFormat.withParameters(featureInfoTemplate, this.options.get<URLSearchParams>('customLayerOptionFeatureInfoParameters') ?? new URLSearchParams()),
+              tileParameters: this.options.get<URLSearchParams>('customLayerOptionTileParameters')?.toString(),
+              featureInfoFormat: $(element).find('ResourceURL').filter((_, resource) => $(resource).attr('template') === featureInfoTemplate).first().attr('format'),
               style: layerStyle,
               legendsURL: legendsURL,
               tableRowPropertyId: layerID + '#' + index + '#',

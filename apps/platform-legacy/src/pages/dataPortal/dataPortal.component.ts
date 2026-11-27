@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, HostListener, Renderer2, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, HostListener, OnDestroy, Renderer2, ViewChild } from '@angular/core';
 import { MatSidenav } from '@angular/material/sidenav';
 import { OnAttachDetach } from 'decorators/onAttachDetach.decorator';
 import { DataSearchConfigurablesServiceResource } from './modules/dataPanel/services/dataSearchConfigurables.service';
@@ -10,11 +10,18 @@ import { LocalStoragePersister } from 'services/model/persisters/localStoragePer
 import { LocalStorageVariables } from 'services/model/persisters/localStorageVariables.enum';
 import { environment } from 'environments/environment';
 import { MapInteractionService } from 'utility/eposLeaflet/services/mapInteraction.service';
-import { MatButtonToggle } from '@angular/material/button-toggle';
+import { ApiService } from 'api/api.service';
 import { CONTEXT_FACILITY, CONTEXT_RESOURCE, CONTEXT_SOFTWARE } from 'api/api.service.factory';
+import { ConceptMetadata } from 'api/webApi/classes/discoverApi.interface';
 import { DialogService } from 'components/dialog/dialog.service';
 import { TourService } from 'services/tour.service';
 import { AnalysisConfigurablesService } from './services/analysisConfigurables.service';
+
+interface ConceptTab extends ConceptMetadata {
+  panel: 'data' | 'registry' | 'software' | 'generic';
+  results: string[] | null;
+  searchFailed: boolean;
+}
 
 @OnAttachDetach()
 @Unsubscriber('subscriptions')
@@ -23,21 +30,19 @@ import { AnalysisConfigurablesService } from './services/analysisConfigurables.s
   templateUrl: './dataPortal.component.html',
   styleUrls: ['dataPortal.component.scss'],
 })
-export class DataPortalComponent implements AfterViewInit {
+export class DataPortalComponent implements AfterViewInit, OnDestroy {
   @ViewChild('dataPanel') dataPanel: ElementRef;
-  @ViewChild('dataPanelButton') dataPanelButton: MatButtonToggle;
   @ViewChild('dataPanelSidenav') dataPanelSidenav: MatSidenav;
-  @ViewChild('analysisPanelSidenav') analysisPanelSidenav: MatSidenav;
+  @ViewChild('analysisPanelSidenav') analysisPanelSidenav?: MatSidenav;
   @ViewChild('registryPanelSidenav') registryPanelSidenav: MatSidenav;
   @ViewChild('softwarePanelSidenav') softwarePanelSidenav: MatSidenav;
   @ViewChild('tablePanelSidenav') tablePanelSidenav: MatSidenav;
   @ViewChild('graphPanelSidenav') graphPanelSidenav: MatSidenav;
   @ViewChild('analysisPanel') analysisPanel: ElementRef;
-  @ViewChild('analysisPanelButton') analysisPanelButton: ElementRef;
   @ViewChild('registryPanel') registryPanel: ElementRef;
-  @ViewChild('registryPanelButton') registryPanelButton: ElementRef;
   @ViewChild('softwarePanel') softwarePanel: ElementRef;
-  @ViewChild('softwarePanelButton') softwarePanelButton: ElementRef;
+  @ViewChild('conceptSidenav') conceptSidenav: MatSidenav;
+  @ViewChild('conceptPanel') conceptPanel: ElementRef<HTMLElement>;
 
   public tableInResults = true;
   public graphInResults = true;
@@ -58,8 +63,12 @@ export class DataPortalComponent implements AfterViewInit {
   public hasModuleSoftware = false;
 
   public hasHiddenMarker = false;
+  public conceptTabs: ConceptTab[] = [];
+  public activeConcept: ConceptTab | null = null;
+  public conceptsLoadFailed = false;
 
   private readonly subscriptions: Array<Subscription> = new Array<Subscription>();
+  private destroyed = false;
 
   private updateTimeout: NodeJS.Timeout;
 
@@ -72,6 +81,8 @@ export class DataPortalComponent implements AfterViewInit {
     private readonly dialogService: DialogService,
     private readonly tourService: TourService,
     private readonly analysisConfigurables: AnalysisConfigurablesService,
+    private readonly apiService: ApiService,
+    private readonly changeDetector: ChangeDetectorRef,
     private renderer: Renderer2,
   ) {
     this.hasModuleData = environment.modules.data;
@@ -114,9 +125,8 @@ export class DataPortalComponent implements AfterViewInit {
       }),
 
       this.panelsEvent.invokeDataPanelOpen.subscribe(() => {
-        this.setDataPanel(true);
-        if (this.hasModuleRegistry) {
-          this.setRegistryPanel(false);
+        if (this.dataPanelSidenav) {
+          this.setDataPanel(true);
         }
       }),
 
@@ -175,42 +185,17 @@ export class DataPortalComponent implements AfterViewInit {
 
   ngAfterViewInit(): void {
     this.currentScreenWidth = window.innerWidth;
+    void this.loadConceptTabs();
 
     setTimeout(() => {
       if (this.hasModuleData) {
-        // leftSidenav opened at first time
-        this.dataPanelSidenav.opened = this.localStoragePersister.getValue(LocalStorageVariables.LS_CONFIGURABLES, LocalStorageVariables.LS_LEFT_TOP_SIDENAV) === 'false' ? false : true;
-        this.setDataPanel(this.dataPanelSidenav.opened);
         // rightSidenav and bottomSidenav closed at first time
         this.tablePanelSidenav.opened = this.localStoragePersister.getValue(LocalStorageVariables.LS_CONFIGURABLES, LocalStorageVariables.LS_RIGHT_TOP_SIDENAV) === 'true' ? true : false;
 
         this.graphPanelSidenav.opened = this.localStoragePersister.getValue(LocalStorageVariables.LS_CONFIGURABLES, LocalStorageVariables.LS_RIGHT_BOTTOM_SIDENAV) === 'true' ? true : false;
       }
 
-      if (this.hasModuleRegistry) {
-        this.renderer.setStyle(this.registryPanelButton.nativeElement as HTMLElement, 'top', '11.9vh');
-
-        // leftMidSidenav opened at first time
-        this.registryPanelSidenav.opened = this.localStoragePersister.getValue(LocalStorageVariables.LS_CONFIGURABLES, LocalStorageVariables.LS_REGISTRY_SIDENAV) === 'true' ? true : false;
-
-        this.setRegistryPanel(this.registryPanelSidenav.opened);
-        // check left sidenav panels open
-        this.checkLeftSidenavOpen();
-      }
-
-      if (this.hasModuleSoftware) {
-        this.renderer.setStyle(this.softwarePanelButton.nativeElement as HTMLElement, 'top', '26.2vh');
-
-        this.softwarePanelSidenav.opened = this.localStoragePersister.getValue(LocalStorageVariables.LS_CONFIGURABLES, LocalStorageVariables.LS_SOFTWARE_SIDENAV) === 'true' ? true : false;
-
-        this.setSoftwarePanel(this.softwarePanelSidenav.opened);
-
-        this.checkLeftSidenavOpen();
-      }
-
-      if (this.hasModuleAnalysis) {
-        this.renderer.setStyle(this.analysisPanelButton.nativeElement as HTMLElement, 'top', '41.1vh');
-
+      if (this.analysisPanelSidenav) {
         // leftMidSidenav opened at first time
         this.analysisPanelSidenav.opened = this.localStoragePersister.getValue(LocalStorageVariables.LS_CONFIGURABLES, LocalStorageVariables.LS_ANALYSIS_SIDENAV) === 'true' ? true : false;
         this.analysisConfigurables.setAnalysisPanelOpen(this.analysisPanelSidenav.opened);
@@ -222,6 +207,102 @@ export class DataPortalComponent implements AfterViewInit {
       this.localStoragePersister.set(LocalStorageVariables.LS_CONFIGURABLES, false, false, LocalStorageVariables.LS_TABLE_DIALOG_OPENED);
       this.localStoragePersister.set(LocalStorageVariables.LS_CONFIGURABLES, false, false, LocalStorageVariables.LS_GRAPH_DIALOG_OPENED);
     }, 100);
+  }
+
+  ngOnDestroy(): void {
+    this.destroyed = true;
+  }
+
+  public async loadConceptTabs(): Promise<void> {
+    this.conceptsLoadFailed = false;
+    let concepts: ConceptMetadata[];
+    try {
+      concepts = await this.apiService.getConcepts();
+    } catch (error) {
+      console.error('Unable to load concepts', error);
+      this.conceptsLoadFailed = true;
+      return;
+    }
+    if (this.destroyed) {
+      return;
+    }
+
+    this.conceptTabs = concepts.map(concept => {
+      const panel = this.getConceptPanelType(concept.name);
+      const tab: ConceptTab = { ...concept, panel, results: null, searchFailed: false };
+      if (panel === 'generic') {
+        void this.searchConcept(tab);
+      }
+      return tab;
+    });
+
+    // Mount the specialized panels so they run their existing initial searches and expose their drawers.
+    this.changeDetector.detectChanges();
+    if (this.dataPanelSidenav) {
+      this.setDataPanel(this.localStoragePersister.getValue(LocalStorageVariables.LS_CONFIGURABLES, LocalStorageVariables.LS_LEFT_TOP_SIDENAV) !== 'false');
+    }
+    if (this.registryPanelSidenav) {
+      this.setRegistryPanel(this.localStoragePersister.getValue(LocalStorageVariables.LS_CONFIGURABLES, LocalStorageVariables.LS_REGISTRY_SIDENAV) === 'true');
+      this.checkLeftSidenavOpen();
+    }
+    if (this.softwarePanelSidenav) {
+      this.setSoftwarePanel(this.localStoragePersister.getValue(LocalStorageVariables.LS_CONFIGURABLES, LocalStorageVariables.LS_SOFTWARE_SIDENAV) === 'true');
+      this.checkLeftSidenavOpen();
+    }
+  }
+
+  public async searchConcept(tab: ConceptTab): Promise<void> {
+    tab.searchFailed = false;
+    try {
+      tab.results = await this.apiService.searchConcept(tab.id);
+    } catch (error) {
+      console.error('Unable to search concept', tab.id, error);
+      tab.searchFailed = true;
+    }
+  }
+
+  public isConceptOpen(tab: ConceptTab): boolean {
+    switch (tab.panel) {
+      case 'data': return this.dataPanelSidenav?.opened ?? false;
+      case 'registry': return this.registryPanelSidenav?.opened ?? false;
+      case 'software': return this.softwarePanelSidenav?.opened ?? false;
+      case 'generic': return this.activeConcept === tab;
+    }
+  }
+
+  public toggleConcept(tab: ConceptTab): void {
+    switch (tab.panel) {
+      case 'data':
+        this.filterPanelToggle();
+        return;
+      case 'registry':
+        this.registryPanelToggle();
+        return;
+      case 'software':
+        this.softwarePanelToggle();
+        return;
+      case 'generic':
+        this.activeConcept = this.activeConcept === tab ? null : tab;
+    }
+
+    if (this.activeConcept) {
+      if (this.dataPanelSidenav?.opened) {
+        this.setDataPanel(false);
+      }
+      if (this.registryPanelSidenav?.opened) {
+        this.setRegistryPanel(false);
+      }
+      if (this.softwarePanelSidenav?.opened) {
+        this.setSoftwarePanel(false);
+      }
+    }
+  }
+
+  public updateLeftPanelWidth(): void {
+    this.leftNavWidth = this.getWidthLeftPanels();
+    if (this.hasModuleAnalysis) {
+      this.setAnalysisPanelLeft();
+    }
   }
 
   // eslint-disable-next-line @typescript-eslint/member-ordering
@@ -239,12 +320,13 @@ export class DataPortalComponent implements AfterViewInit {
     }
 
     if (!closing) {
-      if (this.hasModuleRegistry) {
+      this.activeConcept = null;
+      if (this.registryPanelSidenav) {
         // close registry panel
         this.setRegistryPanel(false);
       }
 
-      if (this.hasModuleSoftware) {
+      if (this.softwarePanelSidenav) {
         this.setSoftwarePanel(false);
       }
     }
@@ -258,12 +340,13 @@ export class DataPortalComponent implements AfterViewInit {
     }
 
     if (!closing) {
-      if (this.hasModuleData) {
+      this.activeConcept = null;
+      if (this.dataPanelSidenav) {
         // close data panel
         this.setDataPanel(false);
       }
 
-      if (this.hasModuleSoftware) {
+      if (this.softwarePanelSidenav) {
         this.setSoftwarePanel(false);
       }
     }
@@ -277,11 +360,12 @@ export class DataPortalComponent implements AfterViewInit {
     }
 
     if (!closing) {
+      this.activeConcept = null;
       // Se il pannello software si apre, chiudi gli altri pannelli a sinistra
-      if (this.hasModuleData) {
+      if (this.dataPanelSidenav) {
         this.setDataPanel(false);
       }
-      if (this.hasModuleRegistry) {
+      if (this.registryPanelSidenav) {
         this.setRegistryPanel(false);
       }
     }
@@ -299,11 +383,15 @@ export class DataPortalComponent implements AfterViewInit {
   }
 
   public analysisPanelToggle(): void {
-    void this.analysisPanelSidenav.toggle().then(() => {
-      this.localStoragePersister.set(LocalStorageVariables.LS_CONFIGURABLES, JSON.stringify(this.analysisPanelSidenav.opened), false, LocalStorageVariables.LS_ANALYSIS_SIDENAV);
-      this.analysisConfigurables.setAnalysisPanelOpen(this.analysisPanelSidenav.opened);
+    const panel = this.analysisPanelSidenav;
+    if (!panel) {
+      return;
+    }
+    void panel.toggle().then(() => {
+      this.localStoragePersister.set(LocalStorageVariables.LS_CONFIGURABLES, JSON.stringify(panel.opened), false, LocalStorageVariables.LS_ANALYSIS_SIDENAV);
+      this.analysisConfigurables.setAnalysisPanelOpen(panel.opened);
 
-      if (this.analysisPanelSidenav.opened) {
+      if (panel.opened) {
         if (this.tablePanelSidenav.opened) {
           this.tablePanelToggle();
         }
@@ -420,6 +508,10 @@ export class DataPortalComponent implements AfterViewInit {
    * @returns a number.
    */
   private getWidthLeftPanels(): number {
+    if (this.conceptSidenav?.opened) {
+      return this.conceptPanel.nativeElement.offsetWidth;
+    }
+
     if (this.dataPanelSidenav !== undefined && this.dataPanelSidenav.opened) {
       return (this.dataPanel.nativeElement as HTMLElement).offsetWidth;
     }
@@ -458,12 +550,21 @@ export class DataPortalComponent implements AfterViewInit {
 
   private checkLeftSidenavOpen(): void {
     if (this.dataPanelSidenav?.opened) {
-      if (this.hasModuleRegistry) {
+      if (this.registryPanelSidenav) {
         this.setRegistryPanel(false);
       }
-      if (this.hasModuleSoftware) {
+      if (this.softwarePanelSidenav) {
         this.setSoftwarePanel(false);
       }
+    }
+  }
+
+  private getConceptPanelType(name: string): ConceptTab['panel'] {
+    switch (name.toUpperCase()) {
+      case 'DATA': return this.hasModuleData ? 'data' : 'generic';
+      case 'FACILITIES': return this.hasModuleRegistry ? 'registry' : 'generic';
+      case 'SOFTWARE': return this.hasModuleSoftware ? 'software' : 'generic';
+      default: return 'generic';
     }
   }
 

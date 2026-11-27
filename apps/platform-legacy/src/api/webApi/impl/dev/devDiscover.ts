@@ -3,7 +3,7 @@ import { ObjectAccessUtility } from '../../utility/objectAccessUtility';
 import { DistributionSummary } from '../../data/distributionSummary.interface';
 import { Rest } from 'api/webApi/classes/rest.interface';
 import { BaseUrl } from 'api/webApi/classes/baseurl.interface';
-import { DiscoverApi, DiscoverResponse, DiscoverRequest } from 'api/webApi/classes/discoverApi.interface';
+import { ConceptMetadata, DiscoverApi, DiscoverResponse, DiscoverRequest } from 'api/webApi/classes/discoverApi.interface';
 import { UrlBuilder } from 'api/webApi/classes/urlBuilder.interface';
 import { Facet } from 'api/webApi/data/facet.interface';
 import { SimpleFacet } from 'api/webApi/data/impl/simpleFacet';
@@ -27,11 +27,6 @@ interface GroupMetadata {
   concept_id: string;
 }
 
-interface ConceptMetadata {
-  id: string;
-  name: string;
-}
-
 /**
  * Responsible for triggering calls to the webApi module "discover" endpoint.
  * - Accepts criteria from caller
@@ -47,6 +42,37 @@ export class DevDiscoverApi implements DiscoverApi {
     protected readonly baseUrl: BaseUrl,
     protected readonly rest: Rest,
   ) { }
+
+  getConcepts(): Promise<ConceptMetadata[]> {
+    if (this.conceptsRequest === undefined) {
+      const builder = this.baseUrl.urlBuilder();
+      builder.addPathElements('concepts');
+      this.conceptsRequest = this.rest.get(builder.build()).then(concepts => {
+        if (!Array.isArray(concepts) || concepts.some((concept: Partial<ConceptMetadata> | null) =>
+          concept === null || typeof concept !== 'object'
+          || typeof concept.id !== 'string' || concept.id.trim().length === 0
+          || typeof concept.name !== 'string' || concept.name.trim().length === 0)) {
+          throw new Error('Invalid concepts response');
+        }
+        return concepts as ConceptMetadata[];
+      }).catch(error => {
+        this.conceptsRequest = undefined;
+        throw error;
+      });
+    }
+    return this.conceptsRequest;
+  }
+
+  async searchConcept(conceptId: string): Promise<string[]> {
+    const builder = this.baseUrl.urlBuilder();
+    builder.addPathElements('search');
+    builder.addParameter('conceptId', conceptId);
+    const results = await this.rest.get(builder.build());
+    if (!Array.isArray(results)) {
+      throw new Error('Invalid search response');
+    }
+    return results.map((item: Record<string, unknown>) => ObjectAccessUtility.getObjectValueString(item, 'name', true));
+  }
 
   getDomains(context: string): Promise<null | Array<Domain>> {
     const builder: UrlBuilder = this.baseUrl.urlBuilder();
@@ -209,26 +235,6 @@ export class DevDiscoverApi implements DiscoverApi {
 
         return response;
       });
-  }
-
-  private getConcepts(): Promise<ConceptMetadata[]> {
-    if (this.conceptsRequest === undefined) {
-      const builder = this.baseUrl.urlBuilder();
-      builder.addPathElements('concepts');
-      this.conceptsRequest = this.rest.get(builder.build()).then(concepts => {
-        if (!Array.isArray(concepts) || concepts.some((concept: Partial<ConceptMetadata> | null) =>
-          concept === null || typeof concept !== 'object'
-          || typeof concept.id !== 'string' || concept.id.trim().length === 0
-          || typeof concept.name !== 'string' || concept.name.trim().length === 0)) {
-          throw new Error('Invalid concepts response');
-        }
-        return concepts as ConceptMetadata[];
-      }).catch(error => {
-        this.conceptsRequest = undefined;
-        throw error;
-      });
-    }
-    return this.conceptsRequest;
   }
 
   private async getConceptId(context: string): Promise<string | null> {
