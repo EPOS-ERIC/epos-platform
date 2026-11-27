@@ -52,6 +52,29 @@ func webServiceParameterInputs(values []WebServiceParameter) []WebServiceParamet
 	return result
 }
 
+func renderParameterInputs(inputs []ParameterInput) []Parameter {
+	result := make([]Parameter, len(inputs))
+	for i, input := range inputs {
+		result[i] = renderParameterInput(input)
+	}
+
+	return result
+}
+
+func renderParameterInput(input ParameterInput) Parameter {
+	if schema, ok := input.Schema.(TemplateSchemaInput); ok {
+		input.Schema = TemplateSchema{
+			Template:   schema.Template,
+			Parameters: renderParameterInputs(schema.Parameters),
+		}
+	}
+
+	return Parameter{
+		ID:             uuid.New(),
+		ParameterInput: input,
+	}
+}
+
 func (value Parameter) Input() ParameterInput {
 	input := value.ParameterInput
 	if value.ResourceID != uuid.Nil {

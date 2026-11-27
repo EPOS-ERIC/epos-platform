@@ -142,6 +142,9 @@ class WMTSMetadataContractTest(DistributionContractTestCase):
             invalid.extend(
                 [
                     {**configuration, field: [parameter("custom", required=True)]},
+                    {**configuration, field: [parameter(
+                        "custom", "TEMPLATE", template="{{eq .value 1}}", parameters=[child(default="text")],
+                    )]},
                     {**configuration, field: [parameter("custom", location="HEADER")]},
                     {
                         **configuration,

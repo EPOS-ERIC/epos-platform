@@ -71,7 +71,7 @@ func (w *GenericWebServiceInput) normalize(serviceType WebServiceType) error {
 	if err := validatePathParameters(w.TemplateURL, pathParameterNames(parameters)); err != nil {
 		return apperror.Field("template_url", "Template URL placeholders must match declared path parameters.", err)
 	}
-	return nil
+	return validateTemplateDefaults("parameters", parameters, w.Body)
 }
 
 // ############### END INPUT ###############
@@ -130,6 +130,9 @@ func (w *GenericWebService) normalize(serviceType WebServiceType) error {
 	}
 	if err := validatePathParameters(w.TemplateURL, pathParameterNames(parameters)); err != nil {
 		return apperror.Field("template_url", "Template URL placeholders must match declared path parameters.", err)
+	}
+	if err := validateTemplateDefaults("parameters", parameters, bodyInput); err != nil {
+		return err
 	}
 	normalized, err := applyNormalizedWebServiceParameters(w.Parameters, parameters)
 	if err != nil {
@@ -229,44 +232,9 @@ func (w GenericWebService) prepareHTTPRequest(parameters []DistributionAccessPar
 		values.supplied[formatParameterID] = true
 	}
 
-	// Render parameter templates and serialize values once, before placing them in the request.
-	parameterText := make(map[uuid.UUID][]string, len(w.Parameters))
-	for _, parameter := range w.Parameters {
-		items := values.resolved[parameter.ID]
-		if schema, ok := parameter.Schema.(TemplateSchema); ok {
-			rendered, err := values.renderTemplate(schema.Template, schema.Parameters, parameter.Required)
-			if err != nil {
-				return PreparedHTTPRequest{}, err
-			}
-
-			items = nil
-			if rendered != nil {
-				items = AccessArray{AccessString(*rendered)}
-			}
-		}
-
-		if items == nil {
-			if parameter.Required {
-				return PreparedHTTPRequest{}, apperror.Field("parameters", fmt.Sprintf("Required parameter %q (%s) is missing.", parameter.Name, parameter.ID), nil)
-			}
-
-			continue
-		}
-
-		text := make([]string, len(items))
-		for i, item := range items {
-			if item == nil {
-				return PreparedHTTPRequest{}, apperror.Default(apperror.CodeInternal)
-			}
-
-			text[i] = item.Text()
-		}
-
-		if !parameter.Location.Valid() {
-			return PreparedHTTPRequest{}, apperror.Default(apperror.CodeInternal)
-		}
-
-		parameterText[parameter.ID] = text
+	parameterText, err := w.renderParameterText(values)
+	if err != nil {
+		return PreparedHTTPRequest{}, err
 	}
 
 	// Validate the template components so substitution cannot change the host or query.
@@ -371,6 +339,42 @@ func (w GenericWebService) prepareHTTPRequest(parameters []DistributionAccessPar
 	return request, nil
 }
 
+// renderParameterText resolves template output before request-specific assembly.
+func (w GenericWebService) renderParameterText(values accessValues) (map[uuid.UUID][]string, error) {
+	parameterText := make(map[uuid.UUID][]string, len(w.Parameters))
+	for _, parameter := range w.Parameters {
+		items := values.resolved[parameter.ID]
+		if schema, ok := parameter.Schema.(TemplateSchema); ok {
+			rendered, err := values.renderTemplate(schema.Template, schema.Parameters, parameter.Required)
+			if err != nil {
+				return nil, err
+			}
+			items = nil
+			if rendered != nil {
+				items = AccessArray{AccessString(*rendered)}
+			}
+		}
+		if items == nil {
+			if parameter.Required {
+				return nil, apperror.Field("parameters", fmt.Sprintf("Required parameter %q (%s) is missing.", parameter.Name, parameter.ID), nil)
+			}
+			continue
+		}
+		text := make([]string, len(items))
+		for i, item := range items {
+			if item == nil {
+				return nil, apperror.Default(apperror.CodeInternal)
+			}
+			text[i] = item.Text()
+		}
+		if !parameter.Location.Valid() {
+			return nil, apperror.Default(apperror.CodeInternal)
+		}
+		parameterText[parameter.ID] = text
+	}
+	return parameterText, nil
+}
+
 // selectAccessFormat checks that output_format is supported and returns the upstream
 // format parameter UUID and validated values, without changing resolved values.
 // It returns uuid.Nil and nil values when no format is selected or when the service
@@ -460,6 +464,14 @@ func (w GenericWebService) resolveAccessValues(assignments []DistributionAccessP
 		values.supplied[assignment.ID] = true
 	}
 
+	if err := values.resolveDefaults(parameters); err != nil {
+		return accessValues{}, internalValidationError(err)
+	}
+
+	return values, nil
+}
+
+func (values accessValues) resolveDefaults(parameters map[uuid.UUID]Parameter) error {
 	for id, parameter := range parameters {
 		if values.supplied[id] {
 			continue
@@ -472,13 +484,13 @@ func (w GenericWebService) resolveAccessValues(assignments []DistributionAccessP
 
 		resolved, err := resolveAccessValue(parameter.Schema, value)
 		if err != nil {
-			return accessValues{}, internalValidationError(err)
+			return err
 		}
 
 		values.resolved[id] = resolved
 	}
 
-	return values, nil
+	return nil
 }
 
 // resolveAccessValue checks scalar/array shape against schema multiplicity and
@@ -565,15 +577,28 @@ func (values accessValues) renderTemplate(source string, parameters []Parameter,
 		}
 	}
 
+	rendered, err := executeRequestTemplate(source, data)
+	if err != nil {
+		if _, ok := errors.AsType[template.ExecError](err); ok {
+			return nil, apperror.Field("parameters", "Template could not be rendered with supplied values.", err)
+		}
+
+		return nil, internalValidationError(err)
+	}
+
+	return &rendered, nil
+}
+
+func executeRequestTemplate(source string, data map[string]AccessScalar) (string, error) {
 	parsed, err := template.New("request").Option("missingkey=error").Parse(source)
 	if err != nil {
-		return nil, internalValidationError(err)
+		return "", err
 	}
 
 	var rendered strings.Builder
 	if err := parsed.Execute(&rendered, data); err != nil {
-		return nil, apperror.Field("parameters", "Template could not be rendered with supplied values.", err)
+		return "", err
 	}
 
-	return new(rendered.String()), nil
+	return rendered.String(), nil
 }

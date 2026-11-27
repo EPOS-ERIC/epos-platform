@@ -67,7 +67,7 @@ class ChildIdentityContractTest(DistributionContractTestCase):
                 distribution = web_distribution(
                     [parameter("filter", "TEMPLATE", template="{{.value}}", parameters=[child()])],
                     method="POST", body_content_type="text/plain", body_template="{{.body}}",
-                    body_parameters=[child("body")],
+                    body_parameters=[child("body", default="default")],
                 )
                 detail = self.create_draft([distribution])
                 original = detail["metadata"]["distributions"][0]

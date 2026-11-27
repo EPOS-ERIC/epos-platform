@@ -45,9 +45,6 @@ func parseWMTSParameters(values []WebServiceParameterInput, field string, reserv
 			return nil, apperror.Field(path+".name", "Standard WMTS parameters cannot be redefined.", nil)
 		}
 	}
-	if err := validateWMSRequiredDefaults(field, parameters); err != nil {
-		return nil, err
-	}
 	return parameters, nil
 }
 
@@ -85,7 +82,13 @@ func (value *WMTSWebServiceInput) Normalize() error {
 		return err
 	}
 	value.GetFeatureInfoParameters, err = parseWMTSParameters(value.GetFeatureInfoParameters, "get_feature_info_parameters", wmtsGetFeatureInfoReservedParameters)
-	return err
+	if err != nil {
+		return err
+	}
+	if err := validateTemplateDefaults("get_tile_parameters", value.GetTileParameters, nil); err != nil {
+		return err
+	}
+	return validateTemplateDefaults("get_feature_info_parameters", value.GetFeatureInfoParameters, nil)
 }
 
 func validateWMTSLayers(defaultLayer string, layers []WMTSLayerInput) error {
